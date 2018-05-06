@@ -1,5 +1,4 @@
 (** Monads -- derived from ocaml-monads library *)
-open Applicative
 
 module type MonadBase = sig
   type 'a m
@@ -26,7 +25,7 @@ end
 module type Monad =
 sig
   include MonadBase
-  include Applicative with type 'a m := 'a m
+  include Applicative.S with type 'a m := 'a m
 
   val (>>=) : 'a m -> ('a -> 'b m) -> 'b m
   val (>=>) : ('a -> 'b m) -> ('b -> 'c m) -> ('a -> 'c m)

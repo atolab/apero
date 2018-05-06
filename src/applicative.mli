@@ -9,7 +9,7 @@ sig
 end
 
 
-module type Applicative =
+module type S =
 sig
   include Base
 
@@ -27,6 +27,6 @@ sig
   val (>*) : 'a m -> 'b m -> 'b m
 end
 
-module Make(A : Base) : Applicative with type 'a m = 'a A.m
+module Make(A : Base) : S with type 'a m = 'a A.m
 
 module Transform(A : Base)(Inner : Base) : Base with type 'a m = 'a Inner.m A.m

@@ -18,7 +18,7 @@ end
 module type Monad =
 sig
   include MonadBase
-  include Applicative.Applicative with type 'a m := 'a m
+  include Applicative.S with type 'a m := 'a m
 
   val (>>=)    : 'a m -> ('a -> 'b m) -> 'b m
   val (>=>) : ('a -> 'b m) -> ('b -> 'c m) -> ('a -> 'c m)
@@ -60,7 +60,7 @@ struct
       let (<*>) f x  = lift2 (fun f x -> f x) f x
     end)
 
-  include (Ap : Applicative.Applicative with type 'a m := 'a m)
+  include (Ap : Applicative.S with type 'a m := 'a m)
 
   let join     m = m >>= (fun x -> x)
 

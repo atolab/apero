@@ -5,7 +5,7 @@ sig
   val (<*>) : ('a -> 'b) m -> 'a m -> 'b m
 end
 
-module type Applicative =
+module type S =
 sig
   include Base
 
