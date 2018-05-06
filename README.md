@@ -1,2 +1,4 @@
 # ato-pervasives
-ATO Labs OCaml Pervasives. 
+
+Ato-pervasives is collection of OCaml libraries that we use on most of our
+OCaml code. 
