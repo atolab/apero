@@ -7,10 +7,12 @@
 *.cmx
 *.cmxs
 *.cmxa
+.merlin
 
 # ocamlbuild working directory
 _build/
 *.install
+
 
 # ocamlbuild targets
 *.byte
