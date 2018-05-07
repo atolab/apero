@@ -1,7 +1,7 @@
 (jbuild_version 1)
 
 (library
- ((name            ato_pervasives)
-  (public_name     ato-pervasives)
+ ((name            apero)
+  (public_name     apero)
   (wrapped     false)
   ))
