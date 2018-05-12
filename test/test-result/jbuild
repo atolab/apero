@@ -1,0 +1,14 @@
+(jbuild_version 1)
+
+(executable
+ ((name      test_result)
+  (modules   (test_result))
+  (libraries (apero alcotest))
+  (preprocess
+    (pps (ppx_monadic)))))
+
+(alias
+ ((name runtest)
+  (package apero)
+  (deps (test_result.exe))
+  (action (run ${exe:test_result.exe} -q --color=always))))
