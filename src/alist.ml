@@ -1,19 +1,26 @@
+open Amonad
 
 module List = struct
   include List
 
-  let drop = Common.drop
+  let drop = Acommon.drop
 
-  let take = Common.take
+  let take = Acommon.take
 
   let zip = combine
 
   let unzip = split
 
+  let  to_string ?(sep=", ") xs f =
+    let s = match xs with
+      | h::tl -> List.fold_left (fun a v -> Printf.sprintf "%s%s%s" a sep @@ f v) (f h) tl
+      | [] -> ""
+    in "(" ^ s ^ ")"
+            
 end
 
 module ListM =
-  Monad.MakePlus(struct
+  MakePlus(struct
     type 'a m = 'a list
     let return x  = [x]
     let bind xs f = List.concat (List.map f xs)
