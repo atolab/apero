@@ -4,4 +4,5 @@
  ((name            apero)
   (public_name     apero)
   (wrapped     false)
+  (libraries       (lwt))
   ))
