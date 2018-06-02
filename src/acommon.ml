@@ -18,7 +18,6 @@ let take n xs =
 
 let compose f g = fun x -> f @@ g @@ x
 
-let  (<.>) = compose
 
 let some default f o = match o with
   | Some v -> f v
@@ -28,11 +27,21 @@ let result f g r = match r with
   | Ok v -> f v
   | Error e -> g e
 
+let apply f v = f v
+
+let flip f = fun a b -> f b a 
+
 let apply_n (t : 'a) (f : 'a -> 'b)  (n: int) =
   let rec loop_n n xs =
     if n = 1 then xs
     else loop_n (n-1) ((f t) :: xs)
   in loop_n n []
+
+
+module InfixM = struct
+  let (<.>) = compose
+  let (<*>) f v = f v
+end
 
 
 module OptionM = struct 
@@ -72,17 +81,24 @@ module OptionM = struct
     | [] -> Some fos
     in rflat os []
 
-  module Infix = struct 
+  let lift f = function 
+  | Some x -> Some (f x)
+  | None -> None
+
+  module InfixM = struct 
     let (>>=) = bind
+    let (<$>) = lift
   end
   
   
 end
 
 module ResultM = struct
-  let bind r f = match r with 
+  type (+'a, +'e) t = ('a, 'e) result
+  
+  let bind r  f = match r with 
   | Ok v -> f v 
-  | _ as e -> e
+  | Error e -> Error e
 
   let bind_error r f = match r with 
   |Error e -> f e
@@ -129,17 +145,75 @@ module ResultM = struct
     | Ok v -> f v
     | Error _  -> ()
 
-    module Infix = struct
+    let lift f = function 
+    | Ok v -> Ok (f v)
+    | Error _ as e -> e 
+
+    module InfixM = struct
       let (>>=) = bind
       let (>>=!) = bind_error
+
+      let (<$>) = lift
     end
 
 end
 
+
 module LwtM = struct
-  open Lwt.Infix
+  include Lwt
+  
   let rec fold_m f b xs = match xs with
     | [] -> Lwt.return b
     | h::tl -> f b h >>= (fun b -> fold_m f b tl)
+
+  let lift f =  fun x -> bind x (fun y -> return (f  y))
+    
+  module InfixM = struct 
+    let (<$>) = lift
+    let (>>=) = bind
+  end
 end
+
+module type MonadM = sig 
+  type 'a m
+  val return : 'a -> 'a m  
+  val bind : 'a m -> ('a -> 'b m) -> 'b m
+  val map : 'a m -> ('a -> 'b) -> 'b m
+  val lift : ('a -> 'b) -> ('a m -> 'b m)
+  val iter : 'a m -> ('a -> unit) -> unit
+  (* val flatten : ('a m) list -> ('a list) m   *)
+  module InfixM : sig
+    val (<$>) : ('a -> 'b) -> ('a m -> 'b m)    
+    val (>>=) : 'a m -> ('a -> 'b m) -> 'b m
+  end 
+end
+(*  
+ module ResultLwtM = struct 
+  let lift f = (LwtM.lift (ResultM.lift f))
+
+  let bind m f = LwtM.bind m (fun r -> OptionM.bind r f)
+
+  
+  module InfixM = struct 
+    let (<$>) = lift
+  end 
+
+ end
+
  
+
+
+module ComposeM (M : MonadM ) (N : MonadM) : (MonadM with type 'a m := 'a M.m N.m) = struct
+  let return x = N.return (M.return x)
+  let apply n f = N.apply n (fun m -> M.apply m f)
+  let bind  n f = N.map n (fun m -> M.bind m f)
+  let map n f = N.map n (fun m -> M.map m f)
+  let lift f = N.lift (M.lift f)
+  let iter n f = N.iter n (fun m -> M.iter m f)
+  
+  module  InfixM = struct
+    let (<$>) = lift 
+    let (>>=) = bind
+  end 
+end
+   *)
