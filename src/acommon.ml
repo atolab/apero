@@ -100,6 +100,14 @@ module ResultM = struct
   | Ok v -> f v 
   | Error e -> Error e
 
+  let bind2 r f = match r with 
+  | Ok (x, y) -> f x y
+  | Error e -> Error e  
+  
+  let map r f = match r with 
+  | Ok v -> Ok (f v)
+  | Error e -> Error e 
+
   let bind_error r f = match r with 
   |Error e -> f e
   | Ok _ as ok -> ok
@@ -119,6 +127,10 @@ module ResultM = struct
   let get = function 
   | Ok v -> v
   | Error _ -> failwith "Cannot extract result from error!"
+
+  let try_get ~run:f ~fail_with:g ~on:r  = match r with
+  | Ok v -> f v 
+  | Error e -> g e
 
   let get_or_else r f = match r with
   | Ok v -> v 
@@ -149,10 +161,15 @@ module ResultM = struct
     | Ok v -> Ok (f v)
     | Error _ as e -> e 
 
+    let rec fold_m f xs b  = match xs with
+    | [] -> return b
+    | h::tl -> bind (f h b) (fun b -> fold_m f tl b)
+
     module InfixM = struct
       let (>>=) = bind
+      let (>>==) = bind2
+      let (>>>) = map
       let (>>=!) = bind_error
-
       let (<$>) = lift
     end
 

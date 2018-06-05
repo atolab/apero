@@ -45,7 +45,11 @@ module ResultM : sig
   type (+'a, +'e) t = ('a, 'e) result
 
   val bind : ('a, 'e) t -> ('a -> ('c, 'e) t) -> ('c,'e) t
+  val bind2 : (('a * 'b), 'e) t -> ('a -> 'b -> ('c, 'e) t) -> ('c,'e) t
+  val map : ('a, 'e) t -> ('a -> 'c) -> ('c,'e) t
   val bind_error : ('a, 'e) t -> ('e -> ('a, 'i) t) -> ('a,'i) t
+  
+  val fold_m : ('a -> 'b -> ('b, 'e) t) -> 'a list -> 'b -> ('b, 'e) t
 
   val return : 'a -> ('a, 'e) t
   val ok : 'a -> ('a, 'e) t
@@ -53,6 +57,7 @@ module ResultM : sig
   val is_ok : ('a, 'e) t -> bool
   val is_error : ('a, 'e) t -> bool
   val get : ('a, 'e) t -> 'a
+  val try_get :  run:('a -> 'c) -> fail_with: ('e -> 'c) -> on:('a, 'e) t -> 'c
   val get_or_else : ('a, 'e) t -> ('e -> 'a) -> 'a
   val or_else : ('a, 'e) t  -> ('e -> ('a, 'e) t) -> ('a, 'e) t
   val flatten : (('a, 'e) t) list -> ('a list, 'e) t
@@ -60,8 +65,10 @@ module ResultM : sig
   val to_option : ('a, 'e) t -> 'a option
   val lift : ('a -> 'b) -> ('a, 'e) t -> ('b, 'e) t
 
-  module InfixM : sig 
+  module InfixM : sig   
     val (>>=) : ('a, 'e) t -> ('a -> ('c, 'e) t) -> ('c,'e) t 
+    val (>>==): (('a * 'b), 'e) t -> ('a -> 'b -> ('c, 'e) t) -> ('c,'e) t
+    val (>>>) : ('a, 'e) t -> ('a -> 'c) -> ('c,'e) t
     val (>>=!) : ('a, 'e) t -> ('e -> ('a, 'i) t) -> ('a,'i) t 
     val (<$>) :  ('a -> 'b) -> ('a, 'e) t -> ('b, 'e) t
   end
