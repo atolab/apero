@@ -75,12 +75,15 @@ module ResultM : sig
   end
 end
 
-
 module LwtM : sig  
   include (module type of Lwt)
   val fold_m : ('a -> 'b -> 'a Lwt.t) -> 'a -> 'b list  -> 'a Lwt.t    
   val lift : ('a -> 'b) -> ('a Lwt.t -> 'b Lwt.t)
+<<<<<<< HEAD
   val flatten : ('a Lwt.t) list -> ('a list) Lwt.t 
+=======
+  val flatten : 'a Lwt.t list -> 'a list Lwt.t
+>>>>>>> 15c2414ea764381ea182a564108b0892cd20b60d
 
   module InfixM : sig 
     val (<$>) : ('a -> 'b) -> ('a Lwt.t -> 'b Lwt.t)
