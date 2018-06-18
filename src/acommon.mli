@@ -64,7 +64,8 @@ module ResultM : sig
   val iter : ('a, 'e) t -> ('a -> unit) -> unit
   val to_option : ('a, 'e) t -> 'a option
   val lift : ('a -> 'b) -> ('a, 'e) t -> ('b, 'e) t
-
+  val cons : ('a, 'e) t -> ('a list, 'e) t -> ('a list, 'e) t 
+  
   module InfixM : sig   
     val (>>=) : ('a, 'e) t -> ('a -> ('c, 'e) t) -> ('c,'e) t 
     val (>>==): (('a * 'b), 'e) t -> ('a -> 'b -> ('c, 'e) t) -> ('c,'e) t
@@ -79,6 +80,7 @@ module LwtM : sig
   include (module type of Lwt)
   val fold_m : ('a -> 'b -> 'a Lwt.t) -> 'a -> 'b list  -> 'a Lwt.t    
   val lift : ('a -> 'b) -> ('a Lwt.t -> 'b Lwt.t)
+  val flatten : ('a Lwt.t) list -> ('a list) Lwt.t 
 
   module InfixM : sig 
     val (<$>) : ('a -> 'b) -> ('a Lwt.t -> 'b Lwt.t)

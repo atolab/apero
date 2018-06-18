@@ -7,7 +7,7 @@ let drop n xs =
       | _::tl -> adrop (n-1) tl
   in adrop n xs
 
-let take n xs =
+let take n xs = 
   let rec atake n xs ys = match n with
     | 0 -> List.rev ys
     | _ -> match xs with
@@ -133,7 +133,7 @@ module ResultM = struct
   | Error e -> g e
 
   let get_or_else r f = match r with
-  | Ok v -> v 
+  | Ok v -> v
   | Error e -> f e
 
   let or_else r f = match r with 
@@ -165,6 +165,11 @@ module ResultM = struct
     | [] -> return b
     | h::tl -> bind (f h b) (fun b -> fold_m f tl b)
 
+    
+    let cons x xs = match x with 
+    | Ok y -> bind xs (fun ys -> Ok (y::ys))
+    | Error _ as e  -> e 
+
     module InfixM = struct
       let (>>=) = bind
       let (>>==) = bind2
@@ -184,7 +189,14 @@ module LwtM = struct
     | h::tl -> f b h >>= (fun b -> fold_m f b tl)
 
   let lift f =  fun x -> bind x (fun y -> return (f  y))
-    
+  
+  let flatten xs = 
+    let rec do_flatten acc ys = 
+      match ys with
+      | [] ->  Lwt.return acc
+      | hd::tl ->  Lwt.bind hd (fun h -> (do_flatten (h::acc) tl))
+    in do_flatten [] xs      
+
   module InfixM = struct 
     let (<$>) = lift
     let (>>=) = bind
