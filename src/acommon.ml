@@ -184,6 +184,13 @@ module LwtM = struct
     | h::tl -> f b h >>= (fun b -> fold_m f b tl)
 
   let lift f =  fun x -> bind x (fun y -> return (f  y))
+
+  let flatten l = 
+    let rec rflat l fl = 
+      match l with 
+      | h::tl -> bind h (fun x -> rflat tl (x::fl))
+      | [] -> return fl
+    in rflat l []
     
   module InfixM = struct 
     let (<$>) = lift
