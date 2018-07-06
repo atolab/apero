@@ -46,71 +46,72 @@ end
 
 module OptionM = struct 
   let bind o f = match o with 
-  | Some v -> f v
-  | None -> None
+    | Some v -> f v
+    | None -> None
 
   let return v = Some v
 
   let zero () = None
 
   let is_some = function
-  | Some _ -> true
-  | _ -> false 
+    | Some _ -> true
+    | _ -> false 
 
-  let get = function 
-  | Some v -> v 
-  | _ -> failwith "Can't get value out of None"
+  let get ?if_none = function 
+    | Some v -> v 
+    | _ -> match if_none with Some(x) -> x | None -> failwith "Can't get value out of None"
 
   let get_or_else opt f = match opt with
-  | Some v  -> v 
-  | _ -> f ()
+    | Some v  -> v 
+    | _ -> f ()
 
   let or_else opt (f: unit -> 'a option) = match opt with 
-  | Some _ -> opt 
-  | None -> f ()
+    | Some _ -> opt 
+    | None -> f ()
 
   let iter opt f = match opt with
-  | Some v -> f v 
-  | _ -> ()
+    | Some v -> f v 
+    | _ -> ()
 
   let flatten os = 
     let rec rflat os fos = match os with 
-    | h::tl -> (match h with 
-      | Some v -> rflat tl (v::fos)
-      | None -> rflat tl fos)
-    | [] -> Some fos
+      | h::tl -> (match h with 
+          | Some v -> rflat tl (v::fos)
+          | None -> rflat tl fos)
+      | [] -> Some fos
     in rflat os []
 
   let lift f = function 
-  | Some x -> Some (f x)
-  | None -> None
+    | Some x -> Some (f x)
+    | None -> None
 
   module InfixM = struct 
     let (>>=) = bind
     let (<$>) = lift
+    let (>==) a b = lift b a
   end
-  
-  
+
+
 end
 
 module ResultM = struct
   type (+'a, +'e) t = ('a, 'e) result
-  
+
   let bind r  f = match r with 
-  | Ok v -> f v 
-  | Error e -> Error e
+    | Ok v -> f v 
+    | Error e -> Error e
 
   let bind2 r f = match r with 
-  | Ok (x, y) -> f x y
-  | Error e -> Error e  
-  
+    | Ok (x, y) -> f x y
+    | Error e -> Error e  
+
   let map r f = match r with 
-  | Ok v -> Ok (f v)
-  | Error e -> Error e 
+    | Ok v -> Ok (f v)
+    | Error e -> Error e 
 
   let bind_error r f = match r with 
-  |Error e -> f e
-  | Ok _ as ok -> ok
+    |Error e -> f e
+    | Ok _ as ok -> ok
 
   let return v = Ok v
 
@@ -119,77 +120,77 @@ module ResultM = struct
   let fail e = Error e 
 
   let is_ok = function 
-  | Ok _ -> true
-  | _ -> false
+    | Ok _ -> true
+    | _ -> false
 
   let is_error r = not @@ is_ok r
 
   let get = function 
-  | Ok v -> v
-  | Error _ -> failwith "Cannot extract result from error!"
+    | Ok v -> v
+    | Error _ -> failwith "Cannot extract result from error!"
 
   let try_get ~run:f ~fail_with:g ~on:r  = match r with
-  | Ok v -> f v 
-  | Error e -> g e
+    | Ok v -> f v 
+    | Error e -> g e
 
   let get_or_else r f = match r with
-  | Ok v -> v
-  | Error e -> f e
+    | Ok v -> v
+    | Error e -> f e
 
   let or_else r f = match r with 
-  | Ok v -> r 
-  | Error e -> f e
+    | Ok v -> r 
+    | Error e -> f e
 
   let flatten rs = 
     let rec rflat rs frs = 
       match rs with 
       | h::tl -> (match h with 
-        | Ok v -> rflat tl (v::frs) 
-        | Error e as err-> err)
+          | Ok v -> rflat tl (v::frs) 
+          | Error e as err-> err)
       | [] -> Ok frs
     in rflat rs []
 
-    let to_option = function
+  let to_option = function
     | Ok v -> OptionM.return v
     | Error _ -> OptionM.zero ()
-  
-    let iter r f = match r with 
+
+  let iter r f = match r with 
     | Ok v -> f v
     | Error _  -> ()
 
-    let lift f = function 
+  let lift f = function 
     | Ok v -> Ok (f v)
     | Error _ as e -> e 
 
-    let rec fold_m f xs b  = match xs with
+  let rec fold_m f xs b  = match xs with
     | [] -> return b
     | h::tl -> bind (f h b) (fun b -> fold_m f tl b)
 
-    
-    let cons x xs = match x with 
+
+  let cons x xs = match x with 
     | Ok y -> bind xs (fun ys -> Ok (y::ys))
     | Error _ as e  -> e 
 
-    module InfixM = struct
-      let (>>=) = bind
-      let (>>==) = bind2
-      let (>>>) = map
-      let (>>=!) = bind_error
-      let (<$>) = lift
-    end
+  module InfixM = struct
+    let (>>=) = bind
+    let (>>==) = bind2
+    let (>>>) = map
+    let (>>=!) = bind_error
+    let (<$>) = lift
+  end
 
 end
 
 
 module LwtM = struct
   include Lwt
-  
+
   let rec fold_m f b xs = match xs with
     | [] -> Lwt.return b
     | h::tl -> f b h >>= (fun b -> fold_m f b tl)
 
   let lift f =  fun x -> bind x (fun y -> return (f  y))
-  
+
   let flatten xs = 
     let rec do_flatten acc ys = 
       match ys with
@@ -223,14 +224,14 @@ end
 
   let bind m f = LwtM.bind m (fun r -> OptionM.bind r f)
 
-  
+
   module InfixM = struct 
     let (<$>) = lift
   end 
 
  end
 
- 
+
 
 
 module ComposeM (M : MonadM ) (N : MonadM) : (MonadM with type 'a m := 'a M.m N.m) = struct
@@ -240,7 +241,7 @@ module ComposeM (M : MonadM ) (N : MonadM) : (MonadM with type 'a m := 'a M.m N.
   let map n f = N.map n (fun m -> M.map m f)
   let lift f = N.lift (M.lift f)
   let iter n f = N.iter n (fun m -> M.iter m f)
-  
+
   module  InfixM = struct
     let (<$>) = lift 
     let (>>=) = bind

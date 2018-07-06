@@ -1,9 +1,0 @@
-B ../_build/default/src/.apero.objs
-B /Users/kydos/.opam/default/lib/bytes
-B /Users/kydos/.opam/default/lib/lwt
-B /Users/kydos/.opam/default/lib/result
-FLG -w -40
-S .
-S /Users/kydos/.opam/default/lib/bytes
-S /Users/kydos/.opam/default/lib/lwt
-S /Users/kydos/.opam/default/lib/result
