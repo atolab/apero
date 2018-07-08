@@ -3,12 +3,12 @@
 (executable
  ((name      test_result)
   (modules   (test_result))
-  (libraries (apero alcotest))
+  (libraries (apero-core alcotest))
   (preprocess
     (pps (ppx_monadic)))))
 
 (alias
  ((name runtest)
-  (package apero)
+  (package apero-core)
   (deps (test_result.exe))
   (action (run ${exe:test_result.exe} -q --color=always))))
