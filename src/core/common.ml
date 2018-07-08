@@ -45,71 +45,72 @@ end
 
 module Option = struct 
   let bind o f = match o with 
-  | Some v -> f v
-  | None -> None
+    | Some v -> f v
+    | None -> None
 
   let return v = Some v
 
   let zero () = None
 
   let is_some = function
-  | Some _ -> true
-  | _ -> false 
+    | Some _ -> true
+    | _ -> false 
 
   let get = function 
-  | Some v -> v 
-  | _ -> failwith "Can't get value out of None"
+    | Some v -> v 
+    | _ -> failwith "Can't get value out of None"
 
   let get_or_else opt f = match opt with
-  | Some v  -> v 
-  | _ -> f ()
+    | Some v  -> v 
+    | _ -> f ()
 
   let or_else opt (f: unit -> 'a option) = match opt with 
-  | Some _ -> opt 
-  | None -> f ()
+    | Some _ -> opt 
+    | None -> f ()
 
   let iter opt f = match opt with
-  | Some v -> f v 
-  | _ -> ()
+    | Some v -> f v 
+    | _ -> ()
 
   let flatten os = 
     let rec rflat os fos = match os with 
-    | h::tl -> (match h with 
-      | Some v -> rflat tl (v::fos)
-      | None -> rflat tl fos)
-    | [] -> Some fos
+      | h::tl -> (match h with 
+          | Some v -> rflat tl (v::fos)
+          | None -> rflat tl fos)
+      | [] -> Some fos
     in rflat os []
 
   let lift f = function 
-  | Some x -> Some (f x)
-  | None -> None
+    | Some x -> Some (f x)
+    | None -> None
 
   module Infix = struct 
     let (>>=) = bind
     let (<$>) = lift
+    let (>==) a b = lift b a
   end
-  
-  
+
+
 end
 
 module Result = struct
   type (+'a, +'e) t = ('a, 'e) result
-  
+
   let bind r  f = match r with 
-  | Ok v -> f v 
-  | Error e -> Error e
+    | Ok v -> f v 
+    | Error e -> Error e
 
   let bind2 r f = match r with 
-  | Ok (x, y) -> f x y
-  | Error e -> Error e  
-  
+    | Ok (x, y) -> f x y
+    | Error e -> Error e  
+
   let map r f = match r with 
-  | Ok v -> Ok (f v)
-  | Error e -> Error e 
+    | Ok v -> Ok (f v)
+    | Error e -> Error e 
 
   let bind_error r f = match r with 
-  |Error e -> f e
-  | Ok _ as ok -> ok
+    |Error e -> f e
+    | Ok _ as ok -> ok
 
   let return v = Ok v
 
@@ -118,54 +119,53 @@ module Result = struct
   let fail e = Error e 
 
   let is_ok = function 
-  | Ok _ -> true
-  | _ -> false
+    | Ok _ -> true
+    | _ -> false
 
   let is_error r = not @@ is_ok r
 
   let get = function 
-  | Ok v -> v
-  | Error _ -> failwith "Cannot extract result from error!"
+    | Ok v -> v
+    | Error _ -> failwith "Cannot extract result from error!"
 
   let try_get ~run:f ~fail_with:g ~on:r  = match r with
-  | Ok v -> f v 
-  | Error e -> g e
+    | Ok v -> f v 
+    | Error e -> g e
 
   let get_or_else r f = match r with
-  | Ok v -> v
-  | Error e -> f e
+    | Ok v -> v
+    | Error e -> f e
 
   let or_else r f = match r with 
   | Ok _ -> r 
   | Error e -> f e
 
   let flatten rs = 
-    let rec rflat rs frs = 
-      match rs with 
+    let rec rflat frs = function      
       | h::tl -> (match h with 
-        | Ok v -> rflat tl (v::frs) 
+        | Ok v -> rflat (v::frs) tl 
         | Error _ as err-> err)
       | [] -> Ok frs
-    in rflat rs []
+    in rflat [] rs
 
-    let to_option = function
+  let to_option = function
     | Ok v -> Option.return v
     | Error _ -> Option.zero ()
   
-    let iter r f = match r with 
+  let iter r f = match r with 
     | Ok v -> f v
     | Error _  -> ()
 
-    let lift f = function 
+  let lift f = function 
     | Ok v -> Ok (f v)
     | Error _ as e -> e 
 
-    let rec fold_m f xs b  = match xs with
+  let rec fold_m f xs b  = match xs with
     | [] -> return b
     | h::tl -> bind (f h b) (fun b -> fold_m f tl b)
 
-    
-    let cons x xs = match x with 
+
+  let cons x xs = match x with 
     | Ok y -> bind xs (fun ys -> Ok (y::ys))
     | Error _ as e  -> e 
 
@@ -182,7 +182,7 @@ end
 
 module LwtM = struct
   include Lwt
-  
+
   let rec fold_m f b xs = match xs with
     | [] -> Lwt.return b
     | h::tl -> f b h >>= (fun b -> fold_m f b tl)

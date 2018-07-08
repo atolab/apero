@@ -31,7 +31,7 @@ module Option : sig
   val return : 'a -> 'a option
   val zero : unit -> 'a option
   val is_some : 'a option -> bool
-  val get : 'a option -> 'a
+  val get : 'a option ->  'a
   val get_or_else : 'a option ->  (unit -> 'a) ->  'a
   val or_else : 'a option -> (unit -> 'a option) -> 'a option
   val flatten : ('a option) list -> ('a list) option
@@ -40,6 +40,7 @@ module Option : sig
   module Infix : sig 
     val (>>=) : 'a option -> ('a -> 'b option) -> 'b option 
     val (<$>) : ('a -> 'b) -> ('a option -> 'b option)
+    val (>==) : 'a option -> ('a -> 'b) -> 'b option
   end
 end
 
@@ -50,7 +51,7 @@ module Result : sig
   val bind2 : (('a * 'b), 'e) t -> ('a -> 'b -> ('c, 'e) t) -> ('c,'e) t
   val map : ('a, 'e) t -> ('a -> 'c) -> ('c,'e) t
   val bind_error : ('a, 'e) t -> ('e -> ('a, 'i) t) -> ('a,'i) t
-  
+
   val fold_m : ('a -> 'b -> ('b, 'e) t) -> 'a list -> 'b -> ('b, 'e) t
 
   val return : 'a -> ('a, 'e) t
