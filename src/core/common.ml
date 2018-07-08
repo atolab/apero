@@ -64,6 +64,10 @@ module Option = struct
     | Some v  -> v 
     | _ -> f ()
 
+  let get_or_default opt d = match opt with
+    | Some v  -> v 
+    | _ -> d
+    
   let or_else opt (f: unit -> 'a option) = match opt with 
     | Some _ -> opt 
     | None -> f ()

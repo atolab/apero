@@ -33,6 +33,7 @@ module Option : sig
   val is_some : 'a option -> bool
   val get : 'a option ->  'a
   val get_or_else : 'a option ->  (unit -> 'a) ->  'a
+  val get_or_default : 'a option -> 'a ->  'a
   val or_else : 'a option -> (unit -> 'a option) -> 'a option
   val flatten : ('a option) list -> ('a list) option
   val iter : 'a option -> ('a -> unit) -> unit

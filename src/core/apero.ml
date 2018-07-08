@@ -1,13 +1,13 @@
 include Atypes
 include Common
 include Iobuf
-(* include Tcodec  *)
-(* include Pcodec *)
 include Property
 
 module List = Alist
 module Id = Id
 module EventStream = Event_stream.EventStream.Make(Stream_lwt.Stream)
+
+let identity v = v
 
 open Result
 open Result.Infix
