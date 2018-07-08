@@ -1,9 +1,10 @@
+(*
 open Types
 open Iobuf
 open Common.Result
 open Common.Result.Infix
 open Property
-
+ 
 
 let encode_vle v buf =
   let to_char l = char_of_int @@ Int64.to_int l in
@@ -123,4 +124,4 @@ let decode_property buf =
 let encode_property (id, value) buf =  
   encode_vle id buf
   >>= encode_bytes value
-  
+   *)

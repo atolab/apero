@@ -6,7 +6,7 @@ bug-reports:  "https://github.com/atolab/ato-pervasives/issues/"
 dev-repo:     "https://github.com/atolab/ato-pervasives.git"
 tags:         ["ato"]
 
-version:"0.1.0"
+version:"0.2.0"
 license: "EPL2"
 
 build: [

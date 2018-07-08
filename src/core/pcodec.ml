@@ -1,6 +1,5 @@
-open Property
+(* open Property
 open Common.Result
-
 open Tcodec
 
 let encode_properties ps =
@@ -8,4 +7,4 @@ let encode_properties ps =
   else (encode_seq encode_property) ps 
   
 let decode_properties = (decode_seq decode_property) 
-
+ *)

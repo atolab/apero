@@ -1,4 +1,4 @@
-open Types
+open Atypes
 
 (**  Module representing an IP endpoint. *)
 module IpEndpoint = struct

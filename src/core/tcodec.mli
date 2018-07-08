@@ -1,4 +1,4 @@
-open Types
+(* open Types
 open Iobuf
 open Property
 
@@ -17,4 +17,4 @@ val encode_seq : ('a -> IOBuf.t -> (IOBuf.t, error) result) -> 'a list -> IOBuf.
 val decode_seq : (IOBuf.t -> ('a * IOBuf.t, error) result) ->  IOBuf.t -> ('a list * IOBuf.t, error) result
 
 val decode_property : IOBuf.t -> ((Property.t * IOBuf.t), error) result
-val encode_property : Property.t -> IOBuf.t -> (IOBuf.t, error) result
+val encode_property : Property.t -> IOBuf.t -> (IOBuf.t, error) result *)
