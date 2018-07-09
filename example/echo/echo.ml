@@ -4,7 +4,7 @@ open Cmdliner
 (* The first step is to define the message that will be used to communicate 
    between TcpService and the service implementation *)
 module Message = struct 
-  type message = Msg of string | Nothing
+  type message = Msg of string | Stop | Nothing
   let of_string s = Msg s 
 end
 
@@ -27,7 +27,8 @@ let reader sock =
   let ic = Lwt_io.of_fd Lwt_io.Input sock in
   fun () -> 
     let%lwt l = Lwt_io.read_line ic in 
-    Lwt.return @@ Result.ok (Message.of_string l)
+    Lwt.return @@  if l = "stop" then Result.ok Message.Stop
+    else Result.ok (Message.of_string l)
 
 (* Define the writer. Notice that if you want to keep state, can implement a pattern similar to the
    state monad using. The service will call [reader sock] each time a new session is established
@@ -39,15 +40,21 @@ let writer sock =
     let%lwt _ = Lwt_io.write_line oc s in 
     Lwt.return (Result.ok ())
   | Nothing -> Lwt.return (Result.ok ())
+  | Stop ->  Lwt.return (Result.ok ())
 
 
-let rec run_echo_service source = 
+let rec run_echo_service source svc = 
   match%lwt EventStream.Source.get source with 
   | Some (EchoService.EventWithReplier {msg = msg ; sid = sid ; svc_id = svc_id ;  reply_to = reply_to }) -> 
-    let%lwt _ = reply_to msg in  run_echo_service source
+    (match msg with 
+      | Message.Msg _ -> let%lwt _ = reply_to msg in  run_echo_service source svc
+      | Message.Stop -> 
+        let%lwt _ = Logs_lwt.debug (fun m -> m "Stopping service.") in
+        let%lwt _ = EchoService.stop svc in Lwt.return_unit
+      | Message.Nothing -> run_echo_service source svc)
   | _ -> 
     let%lwt _ = Logs_lwt.debug (fun m -> m "Ignoring message... ") 
-    in run_echo_service source
+    in run_echo_service source svc
 
 let setup_log style_renderer level =
   Fmt_tty.setup_std_outputs ?style_renderer ();
@@ -62,5 +69,5 @@ let setup_log =
 let () =
   let _ = Term.(eval (setup_log, Term.info "tool")) in  
   let svc = EchoService.create config reader writer sink in   
-  Lwt_main.run @@ Lwt.join [EchoService.start svc ; run_echo_service source ]
+  Lwt_main.run @@ Lwt.join [EchoService.start svc ; run_echo_service source svc]
   

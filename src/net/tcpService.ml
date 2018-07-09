@@ -180,22 +180,13 @@ module TcpService = struct
         | None -> send_loop ()
       in 
 
-      Lwt.pick [ send_loop () ; receive_loop () ; svc.waiter ]
-
-    let rec accept_connection svc = 
-      let%lwt _ = Logs_lwt.debug (fun m -> m "TcpService ready to accept connection" ) in      
-      let%lwt (sock, _) = Lwt_unix.accept svc.socket in
-            
-      match%lwt register_connection svc sock with 
-      | Ok sid -> 
-        let _ = serve_connection sock svc sid in 
-        accept_connection svc
-
-      | Error e -> 
-          let%lwt _ = Logs_lwt.warn (fun m -> m "%s" @@ show_error e) 
-          (* @AC: Perhaps we should wait for some connection to be closed instead of going back
-             waiting for a connection. That would be more robust against DoS attack. *)
-          in accept_connection svc
+      Lwt.catch (fun () -> Lwt.pick [ send_loop () ; receive_loop ()])
+        (function 
+          | Lwt.Canceled -> 
+            let%lwt _ = unregister_connection svc sid in Lwt.return_unit
+          | exn -> 
+            let%lwt _ = unregister_connection svc sid in 
+            Logs_lwt.warn (fun m -> m "Closing session %s because of: %s " (Id.to_string sid) (Printexc.to_string exn)))    
           
     let create config reader writer out_sink = 
       let socket = create_server_socket config in 
@@ -217,7 +208,35 @@ module TcpService = struct
 
     let start svc = 
       let%lwt _ = Logs_lwt.debug (fun m -> m "Starting TcpService with svc-id %d " svc.svc_id) in 
-      Lwt.pick [svc.waiter ; accept_connection svc] 
+      let stop = svc.waiter >|= fun () -> `Stop in 
+      let rec accept_connection svc =         
+      Lwt.try_bind 
+        (fun () ->
+          let%lwt _ = Logs_lwt.debug (fun m -> m "TcpService ready to accept connection" ) in   
+          let accept = Lwt_unix.accept svc.socket >|= (fun v -> `Accept v) in 
+          Lwt.pick [accept ; stop] 
+        )
+        (function 
+          | `Accept (sock, _) ->              
+            (match%lwt register_connection svc sock with 
+              | Ok sid -> 
+                let _ = serve_connection sock svc sid                 
+                in accept_connection svc                    
+              | Error e -> 
+                let%lwt _ = Logs_lwt.warn (fun m -> m "%s" @@ show_error e) 
+                (* @AC: Perhaps we should wait for some connection to be closed instead of going back
+                waiting for a connection. That would be more robust against DoS attack. *)
+                in accept_connection svc)
+          | `Stop ->  
+            let%lwt _ = close_sessions svc in
+            Lwt_unix.close svc.socket 
+          )
+          (function 
+            | Lwt.Canceled -> Lwt.return_unit
+            | exn -> 
+              Logs_lwt.debug (fun m  -> m "Exception raised while accepting session:\n\t%s" (Printexc.to_string exn))
+          )
+        in accept_connection svc
 
     let stop svc = 
       let%lwt _ = Lwt_unix.close svc.socket in 
