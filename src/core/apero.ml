@@ -2,6 +2,7 @@ include Atypes
 include Common
 include Iobuf
 include Property
+include Actor
 
 module List = Alist
 module Id = Id

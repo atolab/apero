@@ -2,7 +2,8 @@
 
 BUILD_LIB=dune build
 BUILD_EXAMPLE=\
-	dune build example/echo/echo.exe 
+	dune build example/echo/echo.exe example/actor/aecho.exe
+	
 
 CLEAN= dune clean
 TEST=dune runtest -j1 --no-buffer
