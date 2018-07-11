@@ -16,7 +16,7 @@ module TcpService : sig
 
     val create : ?backlog:int -> ?stream_length:int -> ?max_connections:int -> 
         ?socket_options:(Lwt_unix.file_descr -> unit) list -> ?svc_id:int 
-        -> locator:TcpLocator.t -> t
+        -> TcpLocator.t -> t
 
     val backlog :  t -> int
     val locator : t -> TcpLocator.t

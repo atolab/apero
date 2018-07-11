@@ -1,4 +1,4 @@
-open Iobuf
+open Apero
 
 
 (** I/O related functions *)
@@ -27,3 +27,5 @@ val sendto : ?flags:Unix.msg_flag list -> Lwt_unix.file_descr -> IOBuf.t -> Unix
 val recv_vec : Lwt_unix.file_descr -> IOBuf.t list -> (int * Unix.file_descr list) Lwt.t
 
 val send_vec : Lwt_unix.file_descr -> IOBuf.t list -> int Lwt.t
+
+val safe_close : Lwt_unix.file_descr -> unit Lwt.t

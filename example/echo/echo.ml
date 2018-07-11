@@ -13,7 +13,7 @@ module EchoService = TcpService.Make (Message) (Apero)
 module Config = TcpService.Config
 
 (* Create a configuration *)
-let config = Config.create (Apero.Option.get @@ TcpLocator.of_string "tcp/0.0.0.0:9999")
+let config = (Config.create (Apero.Option.get @@ TcpLocator.of_string "tcp/0.0.0.0:9999"))
 
 open Apero 
 
@@ -24,7 +24,7 @@ let source,sink = EventStream.create 32
    state monad using. The service will call [reader sock] each time a new session is established
    to allow creating any session specific state may be necessary. *)
 let reader sock = 
-  let ic = Lwt_io.of_fd Lwt_io.Input sock in
+  let ic = Lwt_io.of_fd ~mode:Lwt_io.Input sock in
   fun () -> 
     let%lwt l = Lwt_io.read_line ic in 
     Lwt.return @@  if l = "stop" then Result.ok Message.Stop
@@ -34,7 +34,7 @@ let reader sock =
    state monad using. The service will call [reader sock] each time a new session is established
    to allow creating any session specific state may be necessary. *)
 let writer sock = 
-  let oc = Lwt_io.of_fd Lwt_io.Output sock in 
+  let oc = Lwt_io.of_fd ~mode:Lwt_io.Output sock in 
   function
   | Message.Msg s -> 
     let%lwt _ = Lwt_io.write_line oc s in 
@@ -45,7 +45,7 @@ let writer sock =
 
 let rec run_echo_service source svc = 
   match%lwt EventStream.Source.get source with 
-  | Some (EchoService.EventWithReplier {msg = msg ; sid = sid ; svc_id = svc_id ;  reply_to = reply_to }) -> 
+  | Some (EchoService.EventWithReplier {msg = msg ; sid = _ ; svc_id = _ ;  reply_to = reply_to }) -> 
     (match msg with 
       | Message.Msg _ -> let%lwt _ = reply_to msg in  run_echo_service source svc
       | Message.Stop -> 

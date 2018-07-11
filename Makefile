@@ -1,18 +1,18 @@
 .PHONY: all clean test doc
 
-BUILD_LIB=jbuilder build --dev
+BUILD_LIB=dune build
 BUILD_EXAMPLE=\
-	jbuilder build example/echo/echo.exe 
+	dune build example/echo/echo.exe 
 
-CLEAN= jbuilder clean
-TEST=jbuilder runtest -j1 --no-buffer --dev
-DOC=jbuilder build --dev @doc
-INSTALL=jbuilder install
+CLEAN= dune clean
+TEST=dune runtest -j1 --no-buffer
+DOC=dune build --dev @doc
+INSTALL=dune install
 
 all:
 		${BUILD_LIB}
 		${BUILD_EXAMPLE}
-		
+
 test:
 		${TEST}
 

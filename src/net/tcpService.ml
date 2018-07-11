@@ -15,7 +15,7 @@ module TcpService = struct
   module Config = struct 
     open Lwt_unix
     type t = 
-      { locator: TcpLocator.t
+      { locator : TcpLocator.t
       ; backlog : int
       ; stream_length : int
       ; max_connections : int
@@ -29,7 +29,7 @@ module TcpService = struct
     
     let create ?(backlog=10) ?(stream_length=64) ?(max_connections=8192) 
                 ?(socket_options=[reuseaddr true; tcp_nodelay true]) 
-                ?(svc_id=0) ~locator = 
+                ?(svc_id=0) locator = 
       { locator
       ; backlog
       ; stream_length
@@ -92,6 +92,7 @@ module TcpService = struct
     
     module ConnectionMap = Map.Make(Id)
 
+    
     type t = {
         socket : Lwt_unix.file_descr
       ; mreader : message_reader
@@ -112,7 +113,7 @@ module TcpService = struct
       let sock = socket PF_INET SOCK_STREAM 0 in      
       (Config.socket_options config) |> List.iter (fun setopt -> setopt sock ;) ;      
       let saddr = IpEndpoint.to_sockaddr @@ TcpLocator.endpoint (Config.locator config) in
-      let _ = bind sock saddr in
+      let _ = bind sock saddr in      
       let _ = listen sock (Config.backlog config) in sock
     
     
@@ -133,7 +134,7 @@ module TcpService = struct
       | Some sock ->               
         let%lwt _ = Lwt_mvar.put svc.connections (ConnectionMap.remove sid connections) in 
         let%lwt _ = Lwt_mvar.put svc.connections_count (Int64.sub connection_count Int64.one) in
-        let%lwt _ = Lwt_unix.close sock in
+        let%lwt _ = Net.safe_close sock in
         Lwt.return @@ Result.ok ()
       | None -> Lwt.return @@ Result.fail  @@ `InvalidSession  (`Msg "Unknown session id")
 
@@ -142,7 +143,7 @@ module TcpService = struct
       let%lwt _ = Lwt_mvar.put svc.connections_count 0L in 
       let%lwt connections = Lwt_mvar.take svc.connections in 
       let%lwt _ = Lwt_mvar.put svc.connections ConnectionMap.empty in 
-      Lwt.join @@ ConnectionMap.fold (fun _ sock xs -> (Lwt_unix.close sock)::xs) connections []
+      Lwt.join @@ ConnectionMap.fold (fun _ sock xs -> (Net.safe_close sock)::xs) connections []
       
     let serve_connection (sock:Lwt_unix.file_descr) (svc:t) (sid: Id.t) =       
       let%lwt _ = Logs_lwt.debug (fun m -> m "Serving session with Id: %s" (Id.show sid)) in 
@@ -214,32 +215,35 @@ module TcpService = struct
         (fun () ->
           let%lwt _ = Logs_lwt.debug (fun m -> m "TcpService ready to accept connection" ) in   
           let accept = Lwt_unix.accept svc.socket >|= (fun v -> `Accept v) in 
-          Lwt.pick [accept ; stop] 
-        )
+          Lwt.pick [accept ; stop] >|= (function
+            | `Stop -> Lwt.cancel accept; `Stop 
+            | `Accept _ as a -> a))
         (function 
           | `Accept (sock, _) ->              
             (match%lwt register_connection svc sock with 
               | Ok sid -> 
                 let _ = serve_connection sock svc sid                 
                 in accept_connection svc                    
-              | Error e -> 
+              | Error e ->                   
                 let%lwt _ = Logs_lwt.warn (fun m -> m "%s" @@ show_error e) 
                 (* @AC: Perhaps we should wait for some connection to be closed instead of going back
                 waiting for a connection. That would be more robust against DoS attack. *)
                 in accept_connection svc)
           | `Stop ->  
-            let%lwt _ = close_sessions svc in
-            Lwt_unix.close svc.socket 
-          )
-          (function 
-            | Lwt.Canceled -> Lwt.return_unit
-            | exn -> 
-              Logs_lwt.debug (fun m  -> m "Exception raised while accepting session:\n\t%s" (Printexc.to_string exn))
-          )
+            let%lwt _ = Logs_lwt.debug (fun m -> m "Stopping svc...") in
+            let%lwt _ = Net.safe_close svc.socket in 
+            let%lwt _ = Logs_lwt.debug (fun m -> m "Closing Session...") in
+            Lwt.catch (fun () -> close_sessions svc) 
+            (function 
+            | exn -> Logs_lwt.warn (fun m -> m "Exception raised while closing session %s" @@ Printexc.to_string exn)))
+        (function 
+          | Lwt.Canceled -> Lwt.return_unit            
+          | exn -> 
+              Logs_lwt.debug (fun m  -> m "Exception raised while accepting session:\n\t%s" (Printexc.to_string exn)))
         in accept_connection svc
 
     let stop svc = 
-      let%lwt _ = Lwt_unix.close svc.socket in 
+      let%lwt _ = Net.safe_close svc.socket in 
       let%lwt _ = close_sessions svc in      
       Lwt.wakeup svc.notifier () ;
       Lwt.return_unit
