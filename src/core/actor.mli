@@ -1,5 +1,5 @@
 module Actor : sig 
-  type core_message = [`Timeout of float | `EmptyMessage | `Terminate]
+  type core_message = [`Timeout of float  | `Terminate]
 
   module type S = sig 
     type t

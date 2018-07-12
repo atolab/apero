@@ -2,7 +2,7 @@ open Lwt.Infix
 
 
 module Actor = struct 
-  type core_message = [`Timeout of float | `EmptyMessage | `Terminate]
+  type core_message = [`Timeout of float  | `Terminate]
   
   module type S = sig 
     type t
@@ -29,7 +29,7 @@ module Actor = struct
                         val timeout : float -> message 
                    end) = struct   
     type message = M.message
-    type 'a actor_message = [ `ActorMessage of ('a option * message) | core_message]    
+    type 'a actor_message = [ `ActorMessage of ('a option * message) | `EmptyMessage | core_message]    
 
     module EventStream = Event_stream.EventStream.Make(Stream_lwt.Stream)
     module ActorId = Id.Make(Int64)
