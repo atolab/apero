@@ -6,11 +6,7 @@ open Endpoint
 
 module TcpService = struct
     
-  module Id = Id.Make (
-    struct
-      include Int64 
-      let show = Int64.to_string 
-    end)
+  module Id = Id.Make (Int64)
 
   module Config = struct 
     open Lwt_unix

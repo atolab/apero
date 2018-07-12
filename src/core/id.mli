@@ -17,7 +17,7 @@ module type IdSignature = sig
   val add : t -> t -> t  
   val equal : t -> t -> bool  
   val compare : t -> t -> int  
-  val show : t -> string
+  val to_string : t -> string
 end
 
 

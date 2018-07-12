@@ -17,7 +17,7 @@ module type IdSignature = sig
   val add : t -> t -> t
   val equal : t -> t -> bool
   val compare : t -> t -> int
-  val show : t -> string
+  val to_string : t -> string
 end 
 
 module Make(T : IdSignature) = struct 
@@ -32,5 +32,5 @@ module Make(T : IdSignature) = struct
     (** roll-over to negatives and eventually back to zero*)
     state.count <- T.add state.count T.one ; r    
   
-  let to_string = T.show
+  let show = T.to_string
 end
