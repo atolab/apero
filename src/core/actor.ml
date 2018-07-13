@@ -1,6 +1,6 @@
 open Lwt.Infix
 
-module Octar = struct
+module Actor = struct
 
     type 'a core_message = [`ActorMessage of 'a | `Timeout of float  | `Terminate | `EmptyMessage ]    
     module EventStream = Event_stream.EventStream.Make(Stream_lwt.Stream)

@@ -17,7 +17,7 @@ let apppend_state sxs s =
 
 
   let test_two () = 
-    let open Octar in 
+    let open Actor in 
     let stateful_octar = spawn  ~state:(Some 0) (fun self state from -> function 
     | `Msg msg ->          
         let state = inc_count state in 
