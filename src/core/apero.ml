@@ -3,6 +3,7 @@ include Common
 include Iobuf
 include Property
 include Actor
+include Tactor
 
 module List = Alist
 module Id = Id

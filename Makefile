@@ -2,7 +2,7 @@
 
 BUILD_LIB=dune build
 BUILD_EXAMPLE=\
-	dune build example/echo/echo.exe example/actor/aecho.exe
+	dune build example/echo/echo.exe example/actor/aecho.exe example/tactor/taecho.exe
 	
 
 CLEAN= dune clean

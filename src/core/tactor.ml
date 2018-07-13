@@ -1,20 +1,50 @@
 open Lwt.Infix
 
-module Octar = struct
 
-    type 'a core_message = [`ActorMessage of 'a | `Timeout of float  | `Terminate | `EmptyMessage ]    
+module TActor = struct 
+  type core_message = [`Timeout of float  | `Terminate]
+  
+  module type S = sig 
+    type t
+    
+    type message    
+    
+    val spawn : ?queue_len:int -> ?state:'s option -> ?timeout:float option -> (t -> 's option -> t option -> message -> (t * 's option * bool) Lwt.t) -> t
+    val receive : ?queue_len:int  -> ?timeout:float option -> (t -> t option -> message -> (t * bool) Lwt.t) -> t    
+    val send :  t -> t option -> message  -> unit Lwt.t     
+    val (<!>) :  t -> t option * message -> unit Lwt.t          
+    val maybe_send :  t option -> t option -> message  ->  bool Lwt.t     
+    val (<?>) :  t option -> t option * message ->  bool Lwt.t          
+    val run_loop : t -> unit Lwt.t    
+    val set_timeout : t -> float option -> t
+    val get_timeout : t -> float option 
+    val terminate : t -> 's option -> bool -> (t * 's option * bool) Lwt.t
+    val continue : t -> 's option -> bool ->(t * 's option * bool) Lwt.t
+    val compare : t -> t -> int
+    val (=) : t -> t -> bool
+    
+  end
+
+  module Make (M : sig  type message  
+                        val timeout : float -> message 
+                   end) = struct   
+    type message = M.message
+    type 'a actor_message = [ `ActorMessage of ('a option * message) | `EmptyMessage | core_message]    
+
     module EventStream = Event_stream.EventStream.Make(Stream_lwt.Stream)
     module ActorId = Id.Make(Int64)
-    
-    type  'a t = 
-      { self_sink : 'a EventStream.Sink.s
-      ; self_source : 'a EventStream.Source.s
+
+    type  sink =  (t actor_message) EventStream.Sink.s
+    and   source = (t actor_message) EventStream.Source.s
+    and t = 
+      { self_sink : sink
+      ; self_source : source 
       ; timeout : float option              
       ; run_loop : unit Lwt.t
       ; completer : unit Lwt.u 
-      ; aid : ActorId.t} 
+      ; aid : ActorId.t}
       
-    let spawn ?(queue_len=256) ?(state=None) ?(timeout=None) handler =       
+    let spawn ?(queue_len=256) ?(state=None) ?(timeout=None) (handler:(t -> 's option -> t option -> message -> (t * 's option * bool) Lwt.t)) =       
       let (self_source, self_sink) = EventStream.create queue_len in       
       let (run_loop, completer) = Lwt.task () in     
       let self = { 
@@ -34,18 +64,18 @@ module Octar = struct
 
           match%lwt Lwt.pick ps with 
           | `ActorMessage (from,  msg) -> (handler self state from msg) >>= loop
-          | `Timeout period  -> (handler self state None (`Timeout period)) >>= loop      
+          | `Timeout period  -> (handler self state None (M.timeout period)) >>= loop      
           | `EmptyMessage -> loop (self, state, false)
-          | `Terminate -> (handler self state None `Terminate) >|=  fun _ -> (self, true))
+          | `Terminate -> (Lwt_io.printf "Stop!" >|= fun _ -> (self, true)))
         | false -> Lwt.return (self, false)
       in Lwt.async (fun () -> loop (self, state, true))
       ; self
     
-    let set_timeout (a : 'a t)  timeout = {a with timeout}
-    let get_timeout (a : 'a t)  = a.timeout
+    let set_timeout (a : t)  timeout = {a with timeout}
+    let get_timeout (a : t)  = a.timeout
 
-    let terminate (a : 'a t) (state : 's) _ = Lwt.return (a, state, false)
-    let continue (a : 'a t) (state : 's) _ = Lwt.return (a, state, true)
+    let terminate (a : t) (state : 's) _ = Lwt.return (a, state, false)
+    let continue (a : t) (state : 's) _ = Lwt.return (a, state, true)
     
     let receive ?(queue_len=256) ?(timeout=None) receiver  = 
        let (self_source, self_sink) = EventStream.create queue_len in       
@@ -66,7 +96,7 @@ module Octar = struct
             | None -> []) in     
           (match%lwt Lwt.pick ps with 
           | `ActorMessage (from,  msg) -> (receiver self from msg) >>= loop
-          | `Timeout period  -> (receiver self None (`Timeout period)) >>= loop      
+          | `Timeout period  -> (receiver self None (M.timeout period)) >>= loop      
           | `EmptyMessage -> loop (self, true)
           | `Terminate -> (Lwt_io.printf "Stop!" >|= fun _ -> (self, true)))
         | false -> Lwt.return (self, false)
@@ -78,7 +108,7 @@ module Octar = struct
     let (<!>) dest (from, message)  = EventStream.Sink.push (`ActorMessage (from,message)) dest.self_sink     
     let send  dest from message = dest <!> (from, message) 
          
-    let maybe_send dest from message = match dest with 
+    let maybe_send (dest: t option) (from: t option) (message: message) = match dest with 
       | Some actor -> actor <!> (from, message) >|= fun () -> true
       | None -> Lwt.return false
       
@@ -90,3 +120,5 @@ module Octar = struct
     let (=) a b = ActorId.(equal) a.aid b.aid 
 
   end
+
+end 

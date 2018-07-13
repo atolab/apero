@@ -1,4 +1,4 @@
-module Actor : sig 
+module TActor : sig 
   type core_message = [`Timeout of float  | `Terminate]
 
   module type S = sig 
