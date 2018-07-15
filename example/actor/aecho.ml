@@ -2,7 +2,7 @@ open Apero
 open Lwt.Infix
 
 module EchoMessage = struct 
-  type message = [`Msg of string | `Baz | `MsgX of string * bool | `EchoX of string * bool |  `Echo of string | `GetCount | `Count of int | ActorCoreMessage.core_message] [@@deriving show]
+  type message = [`Msg of string | `Baz | `MsgX of string * bool | `EchoX of string * bool |  `Echo of string | `GetCount | `Count of int | `Timeout of float | `Terminate] [@@deriving show]
 end
 
 let inc_count = function 
@@ -20,7 +20,7 @@ let apppend_state sxs s =
 
   
   let test_two () = 
-    let open Actor in 
+    let open Attore in 
     
     let  (stateful_actor, s_loop) = spawn  ~state:(Some 0) (fun self state from -> function 
         | `Msg msg as pmsg->          
@@ -44,7 +44,7 @@ let apppend_state sxs s =
           Lwt.ignore_result @@ Lwt_io.printf "--- > periodic_actor: Received unexpexted message -- SKIPPING : %s < ---- \n" (EchoMessage.show_message pmsg)
           ; (Lwt.return_false >>= continue self state)) in 
 
-    let (periodic_actor, p_loop) = spawn ~timeout:(Some 0.25) (fun self state from -> function 
+    let (periodic_actor, p_loop) = spawn ~timeout:(Some (0.25, fun p -> `Timeout p)) (fun self state from -> function 
         | `Echo msg as pmsg -> 
           Lwt.ignore_result @@ Lwt_io.printf ">> Periodc Actor received: %s : %s\n" (EchoMessage.show_message pmsg) msg
           ; continue self state true

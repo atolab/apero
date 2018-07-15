@@ -1,11 +1,11 @@
 open Apero
 
-module SocketActorMessages = struct
-  type message =
-    [   `Msg of string * Lwt_io.input Lwt_io.channel * Lwt_io.output Lwt_io.channel
-    | `IMsg of int * Lwt_io.input Lwt_io.channel * Lwt_io.output Lwt_io.channel
-    | ActorCoreMessage.core_message     ]  [@deriving show]
-end
+
+type message =
+  | Msg of string * Lwt_io.input Lwt_io.channel * Lwt_io.output Lwt_io.channel
+  | IMsg of int * Lwt_io.input Lwt_io.channel * Lwt_io.output Lwt_io.channel
+  [@deriving show]
+
 
 open Lwt.Infix
 (* open Actor  *)
@@ -16,7 +16,7 @@ let rec handle_connection ic oc worker_actor client_actor ()=
   (fun msg ->
      match msg with
      | Some msg ->
-       let _ = (worker_actor <!> (Some client_actor, `Msg (msg, ic, oc)) ) in
+       let _ = (worker_actor <!> (Some client_actor, Msg (msg, ic, oc)) ) in
        handle_connection ic oc worker_actor client_actor ()
      | None ->   Lwt_log.info "Connection closed" >>= Lwt.return )
 
@@ -36,7 +36,7 @@ let create_socket host port backlog () =
   Lwt_unix.listen sock backlog;
   sock
 
-let create_server sock (worker_actor : ([> SocketActorMessages.message ] as 'msg) Actor.actor_mailbox)   (connection_actor : ([> SocketActorMessages.message ] as 'msg) Actor.actor_mailbox) =
+let create_server sock worker_actor  connection_actor =
   let rec serve () =
     Lwt_unix.accept sock >>= accept_connection worker_actor connection_actor >>= serve
   in serve
@@ -44,28 +44,26 @@ let create_server sock (worker_actor : ([> SocketActorMessages.message ] as 'msg
 open Actor
 let (echo_actor, ea_loop) = spawn (fun self state from ->
     function
-    | `Msg (msg, ic , oc) ->
+    | Msg (msg, ic , oc) ->
       ignore @@ Lwt_io.printf "[ea] Received %s\n" msg;
-      let r : SocketActorMessages.message = `IMsg ((Random.int 512), ic, oc) in
+      let r = IMsg ((Random.int 512), ic, oc) in
       maybe_send from None r >>= continue self state
-    | `IMsg (imsg, ic, oc) ->
+    | IMsg (imsg, ic, oc) ->
       ignore @@ Lwt_io.printf "[ea] Received %d\n" imsg;
-      let r : SocketActorMessages.message = `Msg (("A"^ string_of_int @@ (Random.int 512)), ic, oc) in
+      let r = Msg (("A"^ string_of_int @@ (Random.int 512)), ic, oc) in
       maybe_send from None r >>= continue self state
-    | _ -> continue self state true
   )
 
 let (client_actor, c_loop) = spawn (fun self state _ ->
     function
-    | `Msg (msg, _ , oc) ->
+    | Msg (msg, _ , oc) ->
       ignore @@ Lwt_io.printf "[ca] Received %s\n" msg;
       let _ = Lwt_io.write_line oc msg in
       continue self state true
-    | `IMsg (imsg, _, oc) ->
+    | IMsg (imsg, _, oc) ->
       ignore @@ Lwt_io.printf "[ca] Received %d\n" imsg;
       let _ = Lwt_io.write_line oc (string_of_int imsg) in
       continue self state true
-    | _ -> continue self state true
   )
 
 let main () =
@@ -80,6 +78,8 @@ let main () =
   serve ()
 
 
+
 let () =
+  
   let server = main () in
   Lwt_main.run @@  Lwt.join [server ; ea_loop; c_loop; ]
