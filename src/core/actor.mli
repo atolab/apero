@@ -14,7 +14,7 @@ module Actor : sig
     type ('msg, 's) reaction = 'msg t -> 's option -> 'msg actor_mailbox  option -> 'msg -> ('msg t * 's option * bool) Lwt.t 
 
     val addr :  'msg t -> 'msg actor_mailbox
-    val spawn : ?queue_len : int -> ?state : 's option -> ?timeout : 'msg timeout_info option -> ('msg, 's) reaction -> ('msg actor_mailbox * unit Lwt.t)
+    val spawn : ?queue_len:int -> ?state :'s option -> ?timeout:'msg timeout_info option -> ?on_terminate:(unit -> 'msg) option -> ('msg, 's) reaction -> ('msg actor_mailbox * unit Lwt.t)
 
     val set_timeout : 'msg t -> (float * (float -> 'msg)) option -> 'msg t
     val get_timeout : 'msg t -> (float * (float -> 'msg)) option

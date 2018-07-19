@@ -1,5 +1,4 @@
 open Lwt.Infix
-
 module Actor = struct
     
     
@@ -31,7 +30,7 @@ module Actor = struct
 
     let addr actor = actor.mailbox
 
-    let spawn ?(queue_len=256) ?(state=None) ?(timeout=None) (handler : ('msg, 's) reaction) =                         
+    let spawn ?(queue_len=256) ?(state=None) ?(timeout=None) ?(on_terminate=None) (handler : ('msg, 's) reaction) =                         
       let (inbox, outbox) = EventStream.create queue_len in
       let aid = ActorId.next_id () in
       let mailbox = ActorMailbox { aid ; inbox ; outbox } in 
@@ -61,8 +60,14 @@ module Actor = struct
               ; loop handler (self, state, true)
             | Terminate -> 
               Lwt.ignore_result @@ Lwt_io.printf "Received Actor EmptyMessage"
-              ;  Lwt.wakeup self.completer () 
-              ; Lwt.return_unit)
+              ; match self.mailbox with 
+              | ActorMailbox { aid=_ ; inbox=_ ; outbox=outbox} -> 
+                  EventStream.Sink.close outbox
+                  ; let r = Common.Option.bind on_terminate (fun make_terminate_message -> Some (handler self state None (make_terminate_message ())))  in
+                  Common.Option.get_or_default r (Lwt.return (self, state, true))
+                  >>= (fun  _ ->  
+                        Lwt.wakeup self.completer () 
+                        ; Lwt.return_unit))                                                   
         | false -> 
           Lwt.wakeup self.completer () 
           ; Lwt.return_unit
@@ -89,6 +94,8 @@ module Actor = struct
 
     let terminate actor state _ = Lwt.return (actor, state, false) 
     let continue actor state _  = Lwt.return (actor, state, true) 
+
+     
     
   end
 
