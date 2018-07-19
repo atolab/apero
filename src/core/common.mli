@@ -12,6 +12,11 @@ module Infix : sig
   val (<*>) : ('a -> 'b) -> 'a -> 'b
 end
 
+module String : sig
+  include (module type of String)
+  val starts_with : string -> string -> bool
+end
+
 module type Monad = sig 
   type 'a m
   val return : 'a -> 'a m  
@@ -69,7 +74,7 @@ module Result : sig
   val to_option : ('a, 'e) t -> 'a option
   val lift : ('a -> 'b) -> ('a, 'e) t -> ('b, 'e) t
   val cons : ('a, 'e) t -> ('a list, 'e) t -> ('a list, 'e) t 
-  
+
   module Infix : sig   
     val (>>=) : ('a, 'e) t -> ('a -> ('c, 'e) t) -> ('c,'e) t 
     val (>>==): (('a * 'b), 'e) t -> ('a -> 'b -> ('c, 'e) t) -> ('c,'e) t

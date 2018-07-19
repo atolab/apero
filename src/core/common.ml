@@ -36,6 +36,14 @@ let apply_n (t : 'a) (f : 'a -> 'b)  (n: int) =
     else loop_n (n-1) ((f t) :: xs)
   in loop_n n []
 
+module String = struct
+  include String
+  let starts_with prefix s =
+    let prefix_len = length prefix in
+    length s >= prefix_len &&
+    equal (sub s 0 prefix_len) prefix
+end
+
 
 module Infix = struct
   let (<.>) = compose
@@ -67,7 +75,7 @@ module Option = struct
   let get_or_default opt d = match opt with
     | Some v  -> v 
     | _ -> d
-    
+
   let or_else opt (f: unit -> 'a option) = match opt with 
     | Some _ -> opt 
     | None -> f ()
@@ -141,21 +149,21 @@ module Result = struct
     | Error e -> f e
 
   let or_else r f = match r with 
-  | Ok _ -> r 
-  | Error e -> f e
+    | Ok _ -> r 
+    | Error e -> f e
 
   let flatten rs = 
     let rec rflat frs = function      
       | h::tl -> (match h with 
-        | Ok v -> rflat (v::frs) tl 
-        | Error _ as err-> err)
+          | Ok v -> rflat (v::frs) tl 
+          | Error _ as err-> err)
       | [] -> Ok frs
     in rflat [] rs
 
   let to_option = function
     | Ok v -> Option.return v
     | Error _ -> Option.zero ()
-  
+
   let iter r f = match r with 
     | Ok v -> f v
     | Error _  -> ()
@@ -173,13 +181,13 @@ module Result = struct
     | Ok y -> bind xs (fun ys -> Ok (y::ys))
     | Error _ as e  -> e 
 
-    module Infix = struct
-      let (>>=) = bind
-      let (>>==) = bind2
-      let (>>>) = map
-      let (>>=!) = bind_error
-      let (<$>) = lift
-    end
+  module Infix = struct
+    let (>>=) = bind
+    let (>>==) = bind2
+    let (>>>) = map
+    let (>>=!) = bind_error
+    let (<$>) = lift
+  end
 
 end
 
@@ -192,7 +200,7 @@ module LwtM = struct
     | h::tl -> f b h >>= (fun b -> fold_m f b tl)
 
   let lift f =  fun x -> bind x (fun y -> return (f  y))
-  
+
   let of_result to_exn = function 
     | Ok v -> Lwt.return v
     | Error e -> Lwt.fail (to_exn e)
