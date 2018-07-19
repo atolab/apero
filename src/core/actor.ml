@@ -75,7 +75,8 @@ module Actor = struct
       Lwt.async (fun () ->  loop handler (self, state, true)) 
       ; (mailbox, run_loop) 
 
-    
+    (* let receive ?(queue_len=256) ?(state=None) ?(timeout=None) handler =  *)
+
 
     let set_timeout actor  timeout_info = {actor with timeout = timeout_info }
     let get_timeout actor = actor.timeout
@@ -91,6 +92,11 @@ module Actor = struct
     
     let compare (ActorMailbox {aid=id_a; inbox=_; outbox=_})  (ActorMailbox {aid=id_b; inbox=_; outbox=_}) = ActorId.compare id_a id_b
     let (=) a b = compare a b = 0
+
+
+ 
+    let close (ActorMailbox {aid=_ ; inbox=_; outbox=outbox}) =   EventStream.Sink.push Terminate outbox
+
 
     let terminate actor state _ = Lwt.return (actor, state, false) 
     let continue actor state _  = Lwt.return (actor, state, true) 
