@@ -1,0 +1,137 @@
+open Actor
+
+
+
+type t = { count: int; op: string }
+
+
+let add i t =
+  Lwt.ignore_result @@ Lwt_io.printf "   - ADD %d to %d\n" i t.count;
+  (t.count+i, {count=t.count+i; op=t.op^"+"^(string_of_int i)} )
+
+let sub i t =
+  Lwt.ignore_result @@ Lwt_io.printf "   - SUB %d to %d\n" i t.count;
+  (t.count-i, {count=t.count-i; op=t.op^"-"^(string_of_int i)} )
+
+let get_op t = (t.op, t)
+
+type 'caller_state function_call =
+  | Call_with_return of (t -> ('caller_state -> 'caller_state) -> t)
+  | Call of (t -> t)
+
+type 'caller_state function_call = [
+  | `Call_int of (t -> (int * t)) * (int -> 'caller_state -> 'caller_state)
+  | `Call_string of (t -> (string * t)) * (string -> 'caller_state -> 'caller_state)
+  | `Return of 'caller_state -> 'caller_state
+]
+
+let pipe (a, _) f = f a
+
+
+let test_actor (init_state:t) = 
+  let open Actor in
+  let open Lwt.Infix in
+  spawn ~state:(Some init_state) (fun self state from ->
+      let current_state =
+        match state with
+        | Some(s) -> s
+        | None -> failwith "!!!!! Error state must be present" in
+      Lwt.ignore_result @@ Lwt_io.printf "TEST_ACTOR RECV MSG...\n";
+      function
+      | Call_with_return(f) ->
+        Lwt.ignore_result @@ Lwt_io.printf "DO CALL...\n";
+        let new_state = f current_state on_return in
+        Lwt.ignore_result @@ Lwt_io.printf "  state after call = %d\n" new_state.count;
+        let response = `Return(on_return result) in
+        maybe_send from None response >>= continue self (Some new_state)
+      | `Call_string(f, on_return) ->
+        Lwt.ignore_result @@ Lwt_io.printf "DO CALL...\n";
+        let result,new_state = f current_state in
+        Lwt.ignore_result @@ Lwt_io.printf "  state after call = %d\n" new_state.count;
+        let response = `Return(on_return result) in
+        maybe_send from None response >>= continue self (Some new_state)
+      | `Return(f) ->
+        Lwt.ignore_result @@ Lwt_io.printf "DO ON_RETURN...\n";
+        let new_state = f current_state in
+        Lwt.ignore_result @@ Lwt_io.printf "  state after on_return = %d\n" new_state.count;
+        continue self (Some new_state) true
+      | _ ->
+        Lwt.ignore_result @@ Lwt_io.printf "UNKOWN MESSAGE...\n";
+        continue self state true
+    )
+
+
+let create_test () = 
+  Lwt.ignore_result @@ Lwt_io.printf "TEST CREATE\n";
+  let init_state = { count=0; op="0" } in
+  let mm_actor,mm_loop = test_actor init_state in
+  mm_actor,mm_loop
+
+
+let create_caller () =
+  Lwt.ignore_result @@ Lwt_io.printf "CALLER CREATE\n";
+  let open Actor in
+  let mm_actor,mm_loop = 
+    spawn ~state:None (fun self state from ->
+        Lwt.ignore_result @@ Lwt_io.printf "CALLER_ACTOR RECV MSG...\n";
+        function
+        | `Return(f) ->
+          Lwt.ignore_result @@ Lwt_io.printf "CALLER DO ON_RETURN...\n";
+          f None;
+          Lwt.ignore_result @@ Lwt_io.printf "CALLER CALLED ON_RETURN...\n";
+          continue self None true
+        | _ ->
+          Lwt.ignore_result @@ Lwt_io.printf "UNKOWN MESSAGE...\n";
+          continue self state true
+      ) in
+  mm_actor,mm_loop
+
+let run () =
+  let open Actor in 
+  let (test, test_loop) = create_test () in
+  let (caller, caller_loop) = create_caller () in
+  let _ =
+    Lwt.ignore_result @@ Lwt_io.printf "\n---- CALLING GET_OP\n";
+    test <!>
+    (Some(caller), 
+     `Call_string(
+       get_op,
+       fun s x ->
+         Lwt.ignore_result @@ Lwt_io.printf "---- RESULT = %s \n" s;
+         x
+     )) in
+  let _ =
+    Lwt.ignore_result @@ Lwt_io.printf "\n---- CALLING ADD 5\n";
+    test <!>
+    (None, 
+     `Call_int(
+       add 5,
+       fun i x ->
+         Lwt.ignore_result @@ Lwt_io.printf "---- RESULT = %d \n" i;
+         x
+     )) in
+  let _ =
+    Lwt.ignore_result @@ Lwt_io.printf "\n---- CALLING SUB 10\n";
+    test <!>
+    (None, 
+     `Call_int(
+       sub 10,
+       fun i x ->
+         Lwt.ignore_result @@ Lwt_io.printf "---- RESULT = %d \n" i;
+         x
+     )) in
+  let _ =
+    Lwt.ignore_result @@ Lwt_io.printf "\n---- CALLING GET_OP\n";
+    test <!>
+    (None, 
+     `Call_string(
+       get_op,
+       fun s x ->
+         Lwt.ignore_result @@ Lwt_io.printf "---- RESULT = %s \n" s;
+         x
+     )) in
+  Lwt.ignore_result @@ Lwt_io.printf "!!!! DO JOIN \n";
+  Lwt_main.run @@ Lwt.join [test_loop];
+  Lwt.ignore_result @@ Lwt_io.printf "!!!! JOIN FINISH \n"
+
+let () = run ()
