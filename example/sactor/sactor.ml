@@ -47,7 +47,8 @@ let (echo_actor, ea_loop) = spawn (fun self state from ->
     | Msg (msg, ic , oc) ->
       ignore @@ Lwt_io.printf "[ea] Received %s\n" msg;
       let r = IMsg ((Random.int 512), ic, oc) in
-      maybe_send from None r >>= continue self state
+      let r2 = (maybe_send from None r) in
+      r2 >>= (continue self state)
     | IMsg (imsg, ic, oc) ->
       ignore @@ Lwt_io.printf "[ea] Received %d\n" imsg;
       let r = Msg (("A"^ string_of_int @@ (Random.int 512)), ic, oc) in
@@ -59,11 +60,11 @@ let (client_actor, c_loop) = spawn (fun self state _ ->
     | Msg (msg, _ , oc) ->
       ignore @@ Lwt_io.printf "[ca] Received %s\n" msg;
       let _ = Lwt_io.write_line oc msg in
-      continue self state true
+      continue self state ()
     | IMsg (imsg, _, oc) ->
       ignore @@ Lwt_io.printf "[ca] Received %d\n" imsg;
       let _ = Lwt_io.write_line oc (string_of_int imsg) in
-      continue self state true
+      continue self state ()
   )
 
 let main () =
@@ -76,8 +77,6 @@ let main () =
   let sock = create_socket host port backlog () in
   let serve = create_server sock echo_actor client_actor in
   serve ()
-
-
 
 let () =
   

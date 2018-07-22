@@ -1,4 +1,4 @@
-open Actor
+(* open Actor
 
 
 type t = { count: int; op: string }
@@ -90,4 +90,4 @@ let run () =
   Lwt_main.run @@ Lwt.join [test_loop];
   Lwt.ignore_result @@ Lwt_io.printf "!!!! JOIN FINISH \n"
 
-let () = run ()
+let () = run () *)

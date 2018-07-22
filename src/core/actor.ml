@@ -85,8 +85,8 @@ module Actor = struct
     let (<!>) dest  (from, msg) = send dest from msg
 
     let maybe_send dest from msg = match dest with       
-      | Some actor -> send actor from msg >|= fun () -> true
-      | None -> Lwt.return false
+      | Some actor -> send actor from msg 
+      | None -> Lwt.return_unit
   
     let (<?!>) dest (from,message) = maybe_send dest from message 
     
@@ -98,39 +98,11 @@ module Actor = struct
     let close (ActorMailbox {aid=_ ; inbox=_; outbox=outbox}) =   EventStream.Sink.push Terminate outbox
 
 
-    let terminate actor state _ = Lwt.return (actor, state, false) 
-    let continue actor state _  = Lwt.return (actor, state, true) 
+    let terminate actor state () = Lwt.return (actor, state, false) 
+    let continue actor state () = Lwt.return (actor, state, true) 
 
      
     
   end
 
   
-    (* let receive  ?(queue_len=256) ?(state=None) ?(timeout=None) (handler : ('msg, 's) reaction) = Lwt.return_unit                             *)
-
-    (* let receive ?(queue_len=256) ?(timeout=None) receiver  = 
-       let (self_source, self_sink) = EventStream.create queue_len in       
-      let (run_loop, completer) = Lwt.task () in     
-      let self = { 
-          self_sink
-        ; self_source
-        ; run_loop
-        ; completer
-        ; timeout 
-        ; aid = ActorId.next_id ()} in    
-      let rec loop (self, continue) = 
-        match continue with 
-        | true -> 
-          let ps = (EventStream.Source.get self_source >|= function  Some v ->  v | None -> `EmptyMessage) :: 
-          (match self.timeout with 
-            | Some period ->  [ Lwt_unix.sleep period >|= fun () -> `Timeout period ]        
-            | None -> []) in     
-          (match%lwt Lwt.pick ps with 
-          | `ActorMessage (from,  msg) -> (receiver self from msg) >>= loop
-          | `Timeout period  -> (receiver self None (`Timeout period)) >>= loop      
-          | `EmptyMessage -> loop (self, true)
-          | `Terminate -> (Lwt_io.printf "Stop!" >|= fun _ -> (self, true)))
-        | false -> Lwt.return (self, false)
-      in Lwt.async (fun () -> loop (self, true))
-      ; self *)
-    
