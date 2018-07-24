@@ -13,7 +13,7 @@ let spawn ?(queue_len=256) ?(timeout=None) ?(on_terminate=None) state pack unpac
             Lwt.ignore_result @@ Logs_lwt.warn (fun m -> m "Fnactor got exception : %s\n%s" msg stack);
             Actor.continue self (Some state) ()
     ) in 
-  let push = fun func -> Lwt.ignore_result @@ Actor.send mailbox None (fun state -> unpack state |> func  |> pack) in
+  let push = fun func -> Actor.send mailbox None (fun state -> unpack state |> func  |> pack) in
   (push, loop)
 
 let terminate _ = raise Terminate 
@@ -22,5 +22,5 @@ let pure f = fun s -> let r = f in (s, r)
 
 let readonly f = fun s -> let r = f s in (s, r)
 
-let (@%>) f g = fun s -> let (s, r) = f s in g r; s
-let (%@>) f g = fun s -> let (r, s) = f s in g r; s
+let (@%>) f g = fun s -> let (s, r) = f s in let _ = g r in s
+let (%@>) f g = fun s -> let (r, s) = f s in let _ = g r in s

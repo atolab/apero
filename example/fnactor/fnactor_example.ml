@@ -1,4 +1,5 @@
 open Fnactor
+open Common.Infix
 open Printf
 
 module A = struct
@@ -36,6 +37,11 @@ let unpack_b = function | B x -> x | _ -> failwith "ERROR"
 let (actor_a, a_loop) = spawn {count=0; op=""} pack_a unpack_a
 let (actor_b, b_loop) = spawn {count=0; op=""} pack_a unpack_a
 let (actor_c, c_loop) = spawn 0 pack_b unpack_b
+
+(* In this example ignore failures when sending message (full queue) *)
+let actor_a = actor_a %> Lwt.ignore_result
+let actor_b = actor_b %> Lwt.ignore_result
+let actor_c = actor_c %> Lwt.ignore_result
 
 let main () =
 
