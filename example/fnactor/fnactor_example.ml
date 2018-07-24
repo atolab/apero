@@ -20,6 +20,10 @@ module A = struct
   let get t = 
     printf "GET (%d, %s)\n%!" t.count t.op;
     (t.count)
+  
+  let is_divisable_by i t = 
+    printf "IS_DIVISABLE_BY %d (%d, %s)\n%!" i t.count t.op;
+    (t.count mod i == 0)
 end
 
 open A
@@ -58,6 +62,8 @@ let main () =
   actor_a @@ readonly get @%> ignore;
 
   actor_a @@ readonly get @%> (fun r -> actor_c @@ pure (printf "  REPLY %d\n%!" r) @%> ignore);
+
+  actor_a @@ readonly (is_divisable_by 10) @%> (fun r -> actor_c @@ pure (printf "  REPLY %b\n%!" r) @%> ignore);
 
   actor_a @@ pure (Unix.sleep 1) @%> ignore;
 

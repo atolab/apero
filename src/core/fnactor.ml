@@ -11,7 +11,7 @@ let spawn ?(queue_len=256) ?(timeout=None) ?(on_terminate=None) state pack unpac
 
   let on_terminate = match on_terminate with 
   | None -> None 
-  | Some func -> Some(fun () -> (fun t -> unpack t |> func |> pack)) in
+  | Some func -> Some(fun u -> (fun t -> unpack t |> func u |> pack)) in
 
   let (mailbox, loop) = Actor.spawn ~queue_len ~state ~timeout ~on_terminate (fun self state _ f ->
     let state = Common.Option.get state in
@@ -30,9 +30,9 @@ let spawn ?(queue_len=256) ?(timeout=None) ?(on_terminate=None) state pack unpac
 
 let terminate _ = raise Terminate 
 
-let pure f = fun s -> let r = f in (s, r)
+let pure f = fun t -> let r = f in (t, r)
 
-let readonly f = fun s -> let r = f s in (s, r)
+let readonly f = fun t -> let r = f t in (t, r)
 
-let (@%>) f g = fun s -> let (s, r) = f s in let _ = g r in s
-let (%@>) f g = fun s -> let (r, s) = f s in let _ = g r in s
+let (@%>) f g = fun t -> let (t, r) = f t in let _ = g r in t
+let (%@>) f g = fun t -> let (r, t) = f t in let _ = g r in t

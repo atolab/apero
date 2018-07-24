@@ -2,15 +2,15 @@ exception Terminate
 
 val spawn :
   ?queue_len:int ->
-  ?timeout:('a -> 'a) Actor.Actor.timeout_info option ->
-  ?on_terminate:('a -> 'a) option ->
-  'a -> ('a -> 'b) -> ('b -> 'a) -> 
-  (('a -> 'a) -> unit Lwt.t) * unit Lwt.t
+  ?timeout:('t -> 't) Actor.Actor.timeout_info option ->
+  ?on_terminate: (unit -> ('t -> 't)) option ->
+  't -> ('t -> 'u) -> ('u -> 't) -> 
+  (('t -> 't) -> unit Lwt.t) * unit Lwt.t
 
-val terminate : 'a -> 'b
+val terminate : 't -> 't
 
-val pure : 'a -> 'b -> 'b * 'a
-val readonly : ('a -> 'b) -> 'a -> 'a * 'b
+val pure : 'a -> 't -> 't * 'a
+val readonly : ('t -> 'a) -> 't -> 't * 'a
 
 val ( @%> ) : ('a -> 'b * 'c) -> ('c -> 'd) -> 'a -> 'b
 val ( %@> ) : ('a -> 'b * 'c) -> ('b -> 'd) -> 'a -> 'c
