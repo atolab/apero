@@ -30,9 +30,9 @@ let spawn ?(queue_len=256) ?(timeout=None) ?(on_terminate=None) state pack unpac
 
 let terminate _ = raise Terminate 
 
-let pure f = fun t -> let r = f in (t, r)
+let pure f = fun t -> let r = f in (r, t)
 
-let readonly f = fun t -> let r = f t in (t, r)
+let readonly f = fun t -> let r = f t in (r, t)
 
 let (@%>) f g = fun t -> let (t, r) = f t in let _ = g r in t
 let (%@>) f g = fun t -> let (r, t) = f t in let _ = g r in t

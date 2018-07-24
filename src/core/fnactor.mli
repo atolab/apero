@@ -9,8 +9,8 @@ val spawn :
 
 val terminate : 't -> 't
 
-val pure : 'a -> 't -> 't * 'a
-val readonly : ('t -> 'a) -> 't -> 't * 'a
+val pure : 'a -> 't -> 'a * 't
+val readonly : ('t -> 'a) -> 't -> 'a * 't
 
 val ( @%> ) : ('a -> 'b * 'c) -> ('c -> 'd) -> 'a -> 'b
 val ( %@> ) : ('a -> 'b * 'c) -> ('b -> 'd) -> 'a -> 'c
