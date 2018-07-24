@@ -20,10 +20,10 @@ module Actor : sig
     val get_timeout : 'msg t -> (float * (float -> 'msg)) option
 
     val send : 'msg actor_mailbox -> 'msg actor_mailbox option ->  'msg -> unit Lwt.t
-    val (<!>) : 'msg actor_mailbox -> ('msg actor_mailbox option * 'msg) -> unit Lwt.t
+    
 
     val maybe_send : 'msg actor_mailbox option -> 'msg actor_mailbox option ->  'msg -> unit Lwt.t      
-    val (<?!>) : 'msg actor_mailbox option -> ('msg actor_mailbox option *  'msg) -> unit Lwt.t 
+    
     
     val close : 'msg actor_mailbox -> unit Lwt.t 
     
@@ -32,6 +32,14 @@ module Actor : sig
   
 
     val compare : 'msg actor_mailbox -> 'msg actor_mailbox -> int
-    val (=) :  'msg actor_mailbox -> 'msg actor_mailbox -> bool
+
+    module Infix : sig
+      val (<!>) : 'msg actor_mailbox -> ('msg actor_mailbox option * 'msg) -> unit Lwt.t
+      val (<?!>) : 'msg actor_mailbox option -> ('msg actor_mailbox option *  'msg) -> unit Lwt.t 
+      
+      module Eq : sig 
+        val (=) :  'msg actor_mailbox -> 'msg actor_mailbox -> bool
+      end
+    end 
     
 end 

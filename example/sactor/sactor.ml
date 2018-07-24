@@ -11,7 +11,7 @@ open Lwt.Infix
 (* open Actor  *)
 
 let rec handle_connection ic oc worker_actor client_actor ()=
-  let open Actor in
+  let open Actor.Infix in 
   Lwt_io.read_line_opt ic >>=
   (fun msg ->
      match msg with

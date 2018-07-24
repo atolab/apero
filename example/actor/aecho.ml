@@ -22,6 +22,7 @@ let apppend_state sxs s =
   
 let test_two () = 
     let open Actor in 
+    let open Actor.Infix in
     
     let  (stateful_actor, s_loop) = spawn  ~state:(Some 0) (fun self state from -> function 
         | `Msg msg as pmsg->          

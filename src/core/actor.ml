@@ -82,16 +82,16 @@ module Actor = struct
     let get_timeout actor = actor.timeout
 
     let send  (ActorMailbox {aid=_ ; inbox=_; outbox=outbox} ) from msg = EventStream.Sink.push (ActorMessage (from, msg)) outbox
-    let (<!>) dest  (from, msg) = send dest from msg
+    
 
     let maybe_send dest from msg = match dest with       
       | Some actor -> send actor from msg 
       | None -> Lwt.return_unit
   
-    let (<?!>) dest (from,message) = maybe_send dest from message 
+    
     
     let compare (ActorMailbox {aid=id_a; inbox=_; outbox=_})  (ActorMailbox {aid=id_b; inbox=_; outbox=_}) = ActorId.compare id_a id_b
-    let (=) a b = compare a b = 0
+    
 
 
  
@@ -101,7 +101,14 @@ module Actor = struct
     let terminate actor state () = Lwt.return (actor, state, false) 
     let continue actor state () = Lwt.return (actor, state, true) 
 
-     
+     module Infix = struct 
+      let (<!>) dest  (from, msg) = send dest from msg
+      let (<?!>) dest (from,message) = maybe_send dest from message 
+      
+      module Eq = struct 
+        let (=) a b = compare a b = 0
+      end
+    end 
     
   end
 
