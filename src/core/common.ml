@@ -47,6 +47,8 @@ end
 
 module Infix = struct
   let (<.>) = compose
+  let (%) = compose
+  let (%>) f g =  g % f
   let (<*>) f v = f v
 end
 

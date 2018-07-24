@@ -9,6 +9,8 @@ val flip : ('a -> 'b -> 'c) -> ('b -> 'a -> 'c)
 
 module Infix : sig 
   val (<.>) : ('b -> 'c) -> ('a -> 'b) -> ('a -> 'c)
+  val (%) : ('b -> 'c) -> ('a -> 'b) -> ('a -> 'c)
+  val (%>) : ('a -> 'b) -> ('b -> 'c) -> ('a -> 'c)
   val (<*>) : ('a -> 'b) -> 'a -> 'b
 end
 
