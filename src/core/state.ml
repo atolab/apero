@@ -32,3 +32,21 @@ module State = struct
         end
     end
 end
+
+
+
+module StateP = struct 
+    type ('s, 'a) m = 's -> 's * 'a
+      
+    let return x s  = (s, x)
+        let bind xf f s = let s',x = xf s in f x s'              
+        let read s    = (s,s)
+        let write x _ = (x,())
+        let run x s   = x s
+        let eval x s  = snd (x s)
+        let modify f  = bind read (fun s -> write (f s))
+    module Infix = struct 
+        let ( >>= ) = bind 
+    end
+end 
+        

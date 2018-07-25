@@ -1,10 +1,5 @@
-open State
-
-
-module GameState = State.Make(struct type s = bool * int end)
-
-open GameState
-open GameState.Infix
+open Apero.StateP
+open Apero.StateP.Infix
 
 let rec play_game = function 
 | [] -> read >>= (fun (_, score) -> return score)
