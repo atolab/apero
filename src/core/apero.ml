@@ -4,6 +4,7 @@ include Iobuf
 include Property
 include Actor
 include Tactor
+include State
 
 module List = Alist
 module Id = Id
