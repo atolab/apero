@@ -1,5 +1,5 @@
-open Apero.StateP
-open Apero.StateP.Infix
+open Apero.State
+open Apero.State.Infix
 
 type game_state = bool * int
 

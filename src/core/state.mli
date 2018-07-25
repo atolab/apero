@@ -1,4 +1,4 @@
-module State : sig 
+module StateFunc : sig 
   module type S = sig        
     type s 
     type 'a m = s -> s * 'a
@@ -19,7 +19,7 @@ module State : sig
 end
 
 
-module StateP : sig 
+module State : sig 
   type ('s, 'a) m = 's -> 's * 'a
   val return : 'a -> 's -> 's * 'a    
   val bind : ('s -> 'a * 'b) -> ('b -> 'a -> 'c) -> 's -> 'c

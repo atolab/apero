@@ -1,4 +1,4 @@
-module State = struct
+module StateFunc = struct
   module type S = sig        
     type s 
     type 'a m = s -> s * 'a
@@ -33,9 +33,7 @@ module State = struct
   end
 end
 
-
-
-module StateP = struct 
+module State = struct 
   type ('s, 'a) m = 's -> 's * 'a
 
   let return x s  = (s, x)
