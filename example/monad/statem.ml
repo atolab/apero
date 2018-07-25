@@ -1,6 +1,8 @@
 open Apero.StateP
 open Apero.StateP.Infix
 
+type game_state = bool * int
+
 let rec play_game = function 
 | [] -> read >>= (fun (_, score) -> return score)
 | (x::xs) ->  
@@ -15,5 +17,6 @@ let rec play_game = function
   
 
 let () = 
-  let r = eval (play_game ['a';'a';'c';'b';'c';'a';'a';'a';'a';'b']) (true, 0) in 
-  Printf.printf "Eval : %d\n" r 
+    let s0 : game_state = (true, 0) in 
+    let r = eval (play_game ['a';'a';'c';'b';'c';'a';'a';'a';'a';'b']) s0 in 
+    Printf.printf "Eval : %d\n" r 
