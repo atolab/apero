@@ -47,6 +47,7 @@ module Option : sig
   val lift : ('a -> 'b) -> ('a option -> 'b option)
   module Infix : sig 
     val (>>=) : 'a option -> ('a -> 'b option) -> 'b option 
+    val (>>) : 'a option -> 'b option -> 'b option 
     val (<$>) : ('a -> 'b) -> ('a option -> 'b option)
     val (>==) : 'a option -> ('a -> 'b) -> 'b option
   end
@@ -79,6 +80,7 @@ module Result : sig
 
   module Infix : sig   
     val (>>=) : ('a, 'e) t -> ('a -> ('c, 'e) t) -> ('c,'e) t 
+    val (>>) : ('a, 'e) t -> ('c, 'e) t -> ('c,'e) t 
     val (>>==): (('a * 'b), 'e) t -> ('a -> 'b -> ('c, 'e) t) -> ('c,'e) t
     val (>>>) : ('a, 'e) t -> ('a -> 'c) -> ('c,'e) t
     val (>>=!) : ('a, 'e) t -> ('e -> ('a, 'i) t) -> ('a,'i) t 
@@ -96,6 +98,7 @@ module LwtM : sig
   module InfixM : sig 
     val (<$>) : ('a -> 'b) -> ('a Lwt.t -> 'b Lwt.t)
     val (>>=) : 'a Lwt.t -> ('a -> 'b Lwt.t) ->  'b Lwt.t
+    val (>>) : 'a Lwt.t -> 'b Lwt.t -> 'b Lwt.t
   end
 end
 

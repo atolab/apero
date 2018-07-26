@@ -100,6 +100,7 @@ module Option = struct
 
   module Infix = struct 
     let (>>=) = bind
+    let (>>) a b = a >>= fun _ -> b 
     let (<$>) = lift
     let (>==) a b = lift b a
   end
@@ -185,6 +186,7 @@ module Result = struct
 
   module Infix = struct
     let (>>=) = bind
+    let (>>) a b = a >>= fun _ -> b 
     let (>>==) = bind2
     let (>>>) = map
     let (>>=!) = bind_error
@@ -218,6 +220,7 @@ module LwtM = struct
   module InfixM = struct 
     let (<$>) = lift
     let (>>=) = bind
+    let (>>) a b = a >>= fun _ -> b  
   end
 end
 
