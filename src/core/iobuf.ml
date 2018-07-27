@@ -3,13 +3,18 @@ open Common.Result.Infix
 
 module IOBuf = struct
 
-  type t = {
-    buffer : Lwt_bytes.t;
-    pos: int;
-    limit : int;
-    capacity: int;
-    mark : int
+  module Id = Id.Make(Int64)
+
+  type t = 
+    { buffer : Lwt_bytes.t
+    ; pos: int
+    ; limit : int
+    ; capacity: int
+    ; mark : int
+    ; id : Id.t
   }
+
+  let compare a b = Id.compare a.id b.id 
 
   let to_string buf =
     let rec hexa_print idx =
@@ -20,13 +25,13 @@ module IOBuf = struct
 
   let create len =  
     Logs.debug (fun m -> m "IOBuf.create %d " len);
-    { buffer = Lwt_bytes.create len;  pos = 0; limit = len; capacity = len; mark = 0 }
+    { buffer = Lwt_bytes.create len;  pos = 0; limit = len; capacity = len; mark = 0; id = Id.next_id ()}
 
   let to_bytes buf = buf.buffer
 
   let from_bytes bs =
     let len = Lwt_bytes.length bs in
-    { buffer = bs; pos =  0; limit = len; capacity = len; mark = 0 }
+    { buffer = bs; pos =  0; limit = len; capacity = len; mark = 0; id = Id.next_id ()}
 
   let flip buf = { buf with limit = buf.pos; pos = 0 }
 

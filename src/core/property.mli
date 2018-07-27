@@ -9,9 +9,9 @@ module Property : sig
     
     module Map : (module type of Map.Make(Key))
     
-    include Ordered.S with type t = Key.t * Value.t
- 
-    val make : Key.t -> Value.t -> t 
+    include Ordered.S with type t = Key.t * Value.t    
+
+    val make : Key.t -> Value.t -> t     
     val key : t -> Key.t 
     val value : t -> Value.t        
   end
