@@ -1,22 +1,23 @@
-open Atypes
-open Iobuf
+open Ordered
 
-module Property : sig
-  type t = Vle.t * IOBuf.t
-  val create : Vle.t -> IOBuf.t -> t
-  val id : t -> Vle.t
-  val data: t -> IOBuf.t
+module Property : sig 
+  
+  module type S = sig 
+ 
+    module Key : Ordered.S      
+    module Value : Ordered.S      
+    
+    module Map : (module type of Map.Make(Key))
+    
+    include Ordered.S with type t = Key.t * Value.t
+ 
+    val make : Key.t -> Value.t -> t 
+    val key : t -> Key.t 
+    val value : t -> Value.t        
+  end
 
-end
 
-module Properties : sig
-  type t = Property.t list
-  val empty : t
-  val singleton : Property.t -> t
-  val add : Property.t -> t -> t
-  val find : (Property.t -> bool) -> t -> Property.t option
-  val get : Vle.t -> t -> Property.t option
-  val length : t -> int
-  val of_list : Property.t list -> t
-  val to_list : t -> Property.t list
+  module Make 
+    (K : Comparable)
+    (V : Comparable) : S with type Key.t = K.t and type Value.t = V.t 
 end

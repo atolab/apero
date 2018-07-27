@@ -16,7 +16,7 @@ let rec play_game = function
         >>= (fun _ -> play_game xs)
   
 
-let () = 
+let () =     
     let s0 : game_state = (true, 0) in 
     let r = eval (play_game ['a';'a';'c';'b';'c';'a';'a';'a';'a';'b']) s0 in 
     Printf.printf "Eval : %d\n" r 
