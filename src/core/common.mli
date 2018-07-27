@@ -97,8 +97,9 @@ module LwtM : sig
 
   module InfixM : sig 
     val (<$>) : ('a -> 'b) -> ('a Lwt.t -> 'b Lwt.t)
-    val (>>=) : 'a Lwt.t -> ('a -> 'b Lwt.t) ->  'b Lwt.t
+    val (>>=) : 'a Lwt.t -> ('a -> 'b Lwt.t) ->  'b Lwt.t (*TODO : remove*)
     val (>>) : 'a Lwt.t -> 'b Lwt.t -> 'b Lwt.t
+    val (%>>=) : ('a -> 'b t) -> ('b -> 'c t) -> 'a -> 'c t
   end
 end
 

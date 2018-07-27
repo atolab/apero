@@ -219,8 +219,9 @@ module LwtM = struct
 
   module InfixM = struct 
     let (<$>) = lift
-    let (>>=) = bind
     let (>>) a b = a >>= fun _ -> b  
+    let (>>=) = bind (*TODO : remove*)
+    let (%>>=) f g = fun x -> f x >>= g
   end
 end
 

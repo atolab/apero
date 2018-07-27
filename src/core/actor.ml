@@ -50,17 +50,17 @@ module Actor = struct
             | None -> []) 
           in (match%lwt Lwt.pick ps with 
             | ActorMessage (from, msg) -> 
-              Lwt.ignore_result @@ Lwt_io.printf "Received Actor Message"
-              ; (handler self state from msg) >>= (loop handler)
+              (* let%lwt _ = Lwt_io.printf "Received Actor Message" in *)
+              (handler self state from msg) >>= (loop handler)
             | Timeout (period, make_timeout) -> 
-              Lwt.ignore_result @@ Lwt_io.printf "Received Actor Timeout"
-              ;(handler self state None (make_timeout period)) >>= (loop handler)
+              (* let%lwt _ = Lwt_io.printf "Received Actor Timeout" in *)
+              (handler self state None (make_timeout period)) >>= (loop handler)
             | EmptyMessage ->  
-              Lwt.ignore_result @@ Lwt_io.printf "Received Actor EmptyMessage"
-              ; loop handler (self, state, true)
+              (* let%lwt _ = Lwt_io.printf "Received Actor EmptyMessage" in *)
+              loop handler (self, state, true)
             | Terminate -> 
-              Lwt.ignore_result @@ Lwt_io.printf "Received Actor EmptyMessage"
-              ; match self.mailbox with 
+              (* let%lwt _ = Lwt_io.printf "Received Actor Terminate" in *)
+              match self.mailbox with 
               | ActorMailbox { aid=_ ; inbox=_ ; outbox=outbox} -> 
                   EventStream.Sink.close outbox
                   ; let r = Common.Option.bind on_terminate (fun make_terminate_message -> Some (handler self state None (make_terminate_message ())))  in
