@@ -17,8 +17,8 @@ type error = [
   [@@deriving show]
 
 
+(* exception Exception of error [@@deriving show] *)
 exception Exception of error [@@deriving show]
-
 module Vle = struct
   include Int64
 

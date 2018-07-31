@@ -94,11 +94,19 @@ module LwtM : sig
   val lift : ('a -> 'b) -> ('a Lwt.t -> 'b Lwt.t)
   val flatten : ('a Lwt.t) list -> ('a list) Lwt.t 
   val of_result : ('e -> exn) -> ('a, 'e) Result.t -> 'a Lwt.t
-
+  val sequence : 'a Lwt.t -> 'b Lwt.t -> 'b Lwt.t  
+  val read_mvar : 'a Lwt_mvar.t -> 'a Lwt.t
+  (* Get the value stored in the mvar and put its back providing 
+    read  access to the underlying functional values. 
+    NOTE: This should only be used with functional types, that
+          have no side-effects *)
   module InfixM : sig 
     val (<$>) : ('a -> 'b) -> ('a Lwt.t -> 'b Lwt.t)
     val (>>=) : 'a Lwt.t -> ('a -> 'b Lwt.t) ->  'b Lwt.t
+    val (>|=) : 'a Lwt.t -> ('a -> 'b) ->  'b Lwt.t
     val (>>) : 'a Lwt.t -> 'b Lwt.t -> 'b Lwt.t
+    val (<&>) : unit Lwt.t -> unit Lwt.t -> unit Lwt.t 
+    val (<?>) : unit Lwt.t -> unit Lwt.t -> unit Lwt.t 
   end
 end
 
