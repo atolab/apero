@@ -1,3 +1,4 @@
+
 module type MVar = sig 
   type 'a t
   val create : 'a -> 'a t
@@ -13,13 +14,13 @@ module type MVar = sig
      read/write concurrency while leveraging functional data 
      structures
   *)
-  val guarded : 'a t -> ('a -> (('b Lwt.t * 'a) Lwt.t)) -> 'b Lwt.t
+  val guarded : 'a t -> ('a -> ('b Lwt.t * 'a) Lwt.t) -> 'b Lwt.t
   (* [guarded] execute a function that changes the state and returns
      a result promise while ensuring the the mvar is acquired before 
      executing the function and released after even if exceptions
      are raised while running the function *)
   
-  val guarded_and_then : 'a t -> ('a -> (('b Lwt.t * 'a) Lwt.t)) -> ('a -> 'b Lwt.t -> 'c Lwt.t) -> 'c Lwt.t
+  val guarded_and_then : 'a t -> ('a -> ('b Lwt.t * 'a) Lwt.t) -> ('a -> 'b Lwt.t -> 'c Lwt.t) -> 'c Lwt.t
   (* [guarded_and_then m f g] runs  f as "guarded m f" but progagates the result and the new state
     to execute g. Notice that g cannot change the state thus is a read-only operation *)
 end
@@ -27,5 +28,5 @@ end
 module MVar_lwt : sig 
 (* This module provides an implementation based on 
 Lwt_mvar implementation *)
-  include MVar  
+  include MVar 
 end  

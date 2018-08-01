@@ -1,3 +1,4 @@
+
 module type MVar = sig 
   type 'a t
   val create : 'a -> 'a t
@@ -13,47 +14,48 @@ module type MVar = sig
      read/write concurrency while leveraging functional data 
      structures
   *)
- val guarded : 'a t -> ('a -> (('b Lwt.t * 'a) Lwt.t)) -> 'b Lwt.t
+ val guarded : 'a t -> ('a -> ('b Lwt.t * 'a) Lwt.t) -> 'b Lwt.t
   (* [guarded] execute a function that changes the state and returns
      a result promise while ensuring the the mvar is acquired before 
      executing the function and released after even if exceptions
      are raised while running the function *)
   
-  val guarded_and_then : 'a t -> ('a -> (('b Lwt.t * 'a) Lwt.t)) -> ('a -> 'b Lwt.t -> 'c Lwt.t) -> 'c Lwt.t
+  val guarded_and_then : 'a t -> ('a -> ('b Lwt.t * 'a) Lwt.t) -> ('a -> 'b Lwt.t -> 'c Lwt.t) -> 'c Lwt.t
   (* [guarded_and_then m f g] runs  f as "guarded m f" but progagates the result and the new state
     to execute g. Notice that g cannot change the state thus is a read-only operation *)
 end
 
 module MVar_lwt = struct
   (* This module wraps the Lwt_mvar implementation *)  
-  include Lwt_mvar  
-
+  type 'a t = 'a Lwt_mvar.t
+  let create = Lwt_mvar.create 
+  let create_empty = Lwt_mvar.create_empty
+  let put = Lwt_mvar.put
+  let take = Lwt_mvar.take
+  let take_available = Lwt_mvar.take_available
+  let is_empty = Lwt_mvar.is_empty
+  open Common.LwtM.InfixM 
   let read m =     
-    let open Lwt.Infix in 
+    
     (take m) >>= fun v -> (put m v) >|= fun () -> v
   
-  let guarded m f = 
-    let open Lwt.Infix in 
-    let%lwt s = take m in  
-    try%lwt 
-      f s >>= fun (r, s') -> put m s' >>= fun () -> r
-    with 
-    | _ as e -> 
-      put m s >>= fun _ -> Lwt.fail e
+  let guarded (m:'a t) (f : 'a -> ('b Lwt.t * 'a) Lwt.t) : 'b Lwt.t = 
+    take m 
+    >>= fun s -> Lwt.catch 
+      (fun () -> f s  >>= fun (r, s') -> put m s' >>= fun () -> r)
+      (fun e -> Lwt.fail e)
+
+    
 
   let guarded_and_then m f g = 
-    let open Lwt.Infix in 
-    let%lwt s = take m in 
-    try%lwt 
-      f s >>= fun (r, s') ->
-        let%lwt _ = put m s' in
-        try%lwt 
-         g s' r
-        with
-        | _ as e -> Lwt.fail e
-        
-    with 
-    | _ as e -> put m s >>= fun _ -> Lwt.fail e
     
+    take m 
+    >>= fun s -> Lwt.catch 
+      (fun () -> 
+        f s >>= fun (r, s') -> put m s' >>= fun () -> 
+          Lwt.catch 
+          (fun () -> g s' r >>= fun r' -> Lwt.return r' )
+          (fun e -> Lwt.fail e))
+      (fun e -> put m s >>= fun () -> Lwt.fail e)    
 
 end  

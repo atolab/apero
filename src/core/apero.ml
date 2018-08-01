@@ -7,6 +7,7 @@ include State
 include Ordered
 include Key_value
 include Uuid
+include Mvar
 module List = Alist
 module Id = Id
 module EventStream = Event_stream.EventStream.Make(Stream_lwt.Stream)
