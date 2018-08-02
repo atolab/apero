@@ -1,5 +1,8 @@
 # ato-pervasives
 
+
+[![Build Status](https://travis-ci.org/atolab/apero.svg?branch=master)](https://travis-ci.org/atolab/apero)
+
 **Apero** is collection of OCaml libraries that we use on most of our OCaml code.
 These libraries include monoids, applicative functors, monads as well as
 some extensions to OCaml Pervasives.
