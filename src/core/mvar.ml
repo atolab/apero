@@ -23,6 +23,10 @@ module type MVar = sig
   val guarded_and_then : 'a t -> ('a -> ('b Lwt.t * 'a) Lwt.t) -> ('a -> 'b Lwt.t -> 'c Lwt.t) -> 'c Lwt.t
   (* [guarded_and_then m f g] runs  f as "guarded m f" but progagates the result and the new state
     to execute g. Notice that g cannot change the state thus is a read-only operation *)
+
+  val return : 'b -> 'a -> ('b Lwt.t * 'a) Lwt.t
+
+  val return_lwt : 'b Lwt.t -> 'a -> ('b Lwt.t * 'a) Lwt.t
 end
 
 module MVar_lwt = struct
@@ -57,5 +61,9 @@ module MVar_lwt = struct
           (fun () -> g s' r >>= fun r' -> Lwt.return r' )
           (fun e -> Lwt.fail e))
       (fun e -> put m s >>= fun () -> Lwt.fail e)    
+
+  let return v s = Lwt.return (Lwt.return v, s)
+  
+  let return_lwt (v:'b Lwt.t) s = Lwt.return (v, s)
 
 end  
