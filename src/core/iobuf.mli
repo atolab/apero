@@ -16,6 +16,8 @@ open Atypes
 module IOBuf : sig  
   type t      
 
+  include Ordered.Comparable with type t := t
+  
   val create : int -> t
   (** [create] allocates a new IOBuf  of the given capacity. *)
 

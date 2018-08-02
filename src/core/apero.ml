@@ -1,11 +1,13 @@
 include Atypes
 include Common
 include Iobuf
-include Property
 include Actor
 include Tactor
 include State
-
+include Ordered
+include Key_value
+include Uuid
+include Mvar
 module List = Alist
 module Id = Id
 module EventStream = Event_stream.EventStream.Make(Stream_lwt.Stream)
@@ -120,25 +122,6 @@ let encode_seq write seq buf =
     (encode_vle (Vle.of_int (List.length seq)) buf)
     >>= put_remaining seq
 
-let decode_property buf =
-  decode_vle buf 
-  >>= (fun (id, buf) -> 
-      decode_bytes buf 
-      >>= (fun (data, buf) -> 
-      return (Property.create id data, buf)))
-  
-  
-
-let encode_property (id, value) buf =  
-  encode_vle id buf
-  >>= encode_bytes value
-(*   
-let encode_properties ps =
-  if ps = Properties.empty then return 
-  else (encode_seq encode_property) ps 
-  
-let decode_properties = (decode_seq decode_property) 
- *)
 
 
 let read1_spec log p1 c buf =    
