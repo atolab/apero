@@ -13,6 +13,7 @@ type error = [
   | `NotImplemented
   | `UnknownSubMode
   | `UnknownMessageId
+  | `ValidationError of error_kind
   | `ErrorStack of error list ]
   [@@deriving show]
 
