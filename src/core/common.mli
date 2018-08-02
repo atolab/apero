@@ -106,6 +106,7 @@ module LwtM : sig
     val (>|=) : 'a Lwt.t -> ('a -> 'b) ->  'b Lwt.t
     val (>>) : 'a Lwt.t -> 'b Lwt.t -> 'b Lwt.t
     val (<&>) : unit Lwt.t -> unit Lwt.t -> unit Lwt.t 
-    val (<?>) : unit Lwt.t -> unit Lwt.t -> unit Lwt.t 
+    val (<?>) : unit Lwt.t -> unit Lwt.t -> unit Lwt.t
+    val (%>>=) : ('a -> 'b t) -> ('b -> 'c t) -> 'a -> 'c t
   end
 end

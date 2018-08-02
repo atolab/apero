@@ -230,6 +230,7 @@ module LwtM = struct
     let (>|=) = Lwt.Infix.(>|=)
     let (<&>) = Lwt.Infix.(<&>)
     let (<?>) = Lwt.Infix.(<?>)
+    let (%>>=) f g = fun x -> f x >>= g
   end
 end
 
