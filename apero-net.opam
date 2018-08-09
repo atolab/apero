@@ -10,12 +10,12 @@ version:"0.2.0"
 license: "EPL2"
 
 build: [
- ["jbuilder" "subst"] {pinned}
- ["jbuilder" "build" "-p" name "-j" jobs]
+ ["dune" "subst"] {pinned}
+ ["dune" "build" "-p" name "-j" jobs]
 ]
 
 depends: [
-  "jbuilder"
+  "dune"
 ]
 
 available: [ocaml-version >= "4.03.0"]
