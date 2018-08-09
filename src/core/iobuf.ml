@@ -142,7 +142,7 @@ module IOBuf = struct
       begin
         let s = Bytes.create len in
         Lwt_bytes.blit_to_bytes buf.buffer buf.pos s 0 len;
-        return { buf with pos = buf.pos + len }
+        return (Bytes.to_string s, { buf with pos = buf.pos + len })
       end 
     else 
       fail (`OutOfBounds (`Msg "IOBuf.get_string"))

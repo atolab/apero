@@ -64,7 +64,7 @@ module IOBuf : sig
 
   val put_string : string -> t -> (t, error) result 
   
-  val get_string : int -> t -> (t, error) result 
+  val get_string : int -> t -> ((string * t), error) result
 
   val put_buf : t -> t -> (t, error) result 
 
