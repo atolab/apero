@@ -1,0 +1,27 @@
+opam-version: "1.2"
+maintainer:   ["angelo@adlink-labs.tech"]
+authors:      ["Angelo Corsaro"]
+homepage:     "https://github.com/atolab"
+bug-reports:  "https://github.com/atolab/ato-pervasives/issues/"
+dev-repo:     "https://github.com/atolab/ato-pervasives.git"
+tags:         ["ato"]
+
+version:"0.2.0"
+license: "EPL2"
+
+build: [
+ ["dune" "subst"] {pinned}
+ ["dune" "build" "-p" name "-j" jobs]
+]
+
+depends: [
+  "dune"
+  "apero-core"
+  "apero-net"
+]
+
+conflicts: [
+  "lwt" {< "4.0.0"}
+]
+
+available: [ocaml-version >= "4.03.0"]
