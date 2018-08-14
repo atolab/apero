@@ -13,6 +13,11 @@ build: [
  ["dune" "subst"] {pinned}
  ["dune" "build" "-p" name "-j" jobs]
 ]
+
+install: [
+  ["dune" "install" name]
+]
+
 depends: [
   "dune"
   "cmdliner"
