@@ -47,7 +47,7 @@ module MVar_lwt = struct
     take m 
     >>= fun s -> Lwt.catch 
       (fun () -> f s  >>= fun (r, s') -> put m s' >>= fun () -> r)
-      (fun e -> Lwt.fail e)
+      (fun e -> put m s >>= fun () -> Lwt.fail e)
 
     
 
