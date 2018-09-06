@@ -1,4 +1,4 @@
 (executable
  (name    sactor)
-  (libraries apero-core apero-net lwt lwt.unix lwt_log logs logs.lwt logs.fmt logs.cli fmt fmt.cli fmt.tty cmdliner ppx_deriving)
+  (libraries apero-core apero-net lwt lwt.unix  logs logs.lwt logs.fmt logs.cli fmt fmt.cli fmt.tty cmdliner ppx_deriving)
   (preprocess (pps lwt_ppx ppx_deriving.show ppx_deriving.ord)))

@@ -28,7 +28,6 @@ depends: [
   "uuidm" 
   "yojson"
   "lwt_ppx"
-  "lwt_log"
 
 ]
 

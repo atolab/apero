@@ -14,7 +14,7 @@ module TcpService : sig
     val sndbuf : int -> Lwt_unix.file_descr -> unit 
     val rcvbuf: int -> Lwt_unix.file_descr -> unit 
 
-    val create : ?backlog:int -> ?stream_length:int -> ?max_connections:int -> 
+    val create : ?backlog:int -> ?max_connections:int -> 
         ?socket_options:(Lwt_unix.file_descr -> unit) list -> ?svc_id:int 
         -> TcpLocator.t -> t
 
@@ -22,38 +22,20 @@ module TcpService : sig
     val locator : t -> TcpLocator.t
     val socket_options : t -> (Lwt_unix.file_descr -> unit) list
     val max_connectiosn : t -> int 
-    val stream_length : t -> int
     val svc_id : t -> int
   end
-
-  module type S = sig 
+  module type S = sig     
     type t
-    type message
-    type error 
+    type io_service = Lwt_unix.file_descr -> unit -> unit Lwt.t    
 
-    type message_reader = Lwt_unix.file_descr -> unit -> ((message, error) Result.t) Lwt.t
-    type message_writer = Lwt_unix.file_descr -> message -> ((unit, error) Result.t) Lwt.t
-    
-    type replier = message -> unit Lwt.t    
-    
-    type event = 
-      | EventWithReplier of { msg : message; svc_id : int; sid : Id.t; reply_to: replier }
-      | Event of { msg : message; svc_id : int; sid : Id.t; reply_to: replier }
-      
+    val create : Config.t -> t
 
-    type sink = event EventStream.Sink.s
-    type source = event EventStream.Source.s
-  
-    val create : Config.t -> message_reader -> message_writer -> sink -> t
-    
-    val start : t -> unit Lwt.t
+    val start : t -> io_service ->  unit Lwt.t
     val stop : t -> unit Lwt.t
     
     val socket : t -> Lwt_unix.file_descr    
   end 
 
-  module Make (M : sig type message  end)
-              (E : sig type error  val show_error : error -> string end) 
-              : S with type message = M.message and type error = E.error
+  module Make (MVar : MVar) : S 
 
 end

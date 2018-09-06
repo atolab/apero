@@ -1,26 +1,24 @@
 open Apero_net
 open Cmdliner 
 
-
-(* Make the service with the TcpService functor *)
-module EchoService = TcpService.Make  (Apero.MVar_lwt)
-module Config = TcpService.Config
-
 (* The first step is to define the message that will be used to communicate 
    between TcpService and the service implementation *)
-module Message = struct
+module Message = struct 
   type message = Msg of string | Stop | Nothing
   let of_string s = Msg s 
 end
 
+(* Make the service with the TcpService functor *)
+module EchoService = TcpServiceES.Make (Message) (Apero)
+module Config = TcpServiceES.Config
+
 (* Create a configuration *)
-let config = (TcpService.Config.create (Apero.Option.get @@ TcpLocator.of_string "tcp/0.0.0.0:9999"))
+let config = (Config.create (Apero.Option.get @@ TcpLocator.of_string "tcp/0.0.0.0:9999"))
 
 open Apero 
 
-
-    (* type reader = Lwt_unix.file_descr -> unit -> ((IOBuf.t, error) Result.t) Lwt.t
-    type dispatcher = IOBuf.t -> (IOBuf.t list) Lwt.t *)
+(* Create the source and sink used to connect with the TcpService *)
+let source,sink = EventStream.create 32
 
 (* Define the reader. Notice that if you want to keep state, can implement a pattern similar to the
    state monad using. The service will call [reader sock] each time a new session is established
@@ -40,20 +38,23 @@ let writer sock =
   function
   | Message.Msg s -> 
     let%lwt _ = Lwt_io.write_line oc s in 
-    Lwt.return_unit
-  | _ -> Lwt.return_unit
-  
-let run_echo_service reader writer (svc:EchoService.t) (sock : Lwt_unix.file_descr) =
-  let mreader = reader sock in 
-  let mwriter = writer sock in 
-  fun () ->     
-    match%lwt  mreader () with 
-    | Ok msg -> (match msg with 
-      | Message.Msg _ as msg -> mwriter msg 
-      | Message.Stop -> EchoService.stop svc 
-      | _ -> Lwt.return_unit) 
-    | _ -> Lwt.return_unit
-    
+    Lwt.return (Result.ok ())
+  | Nothing -> Lwt.return (Result.ok ())
+  | Stop ->  Lwt.return (Result.ok ())
+
+
+let rec run_echo_service source svc = 
+  match%lwt EventStream.Source.get source with 
+  | Some (EchoService.EventWithReplier {msg = msg ; sid = _ ; svc_id = _ ;  reply_to = reply_to }) -> 
+    (match msg with 
+      | Message.Msg _ -> let%lwt _ = reply_to msg in  run_echo_service source svc
+      | Message.Stop -> 
+        let%lwt _ = Logs_lwt.debug (fun m -> m "Stopping service.") in
+        let%lwt _ = EchoService.stop svc in Lwt.return_unit
+      | Message.Nothing -> run_echo_service source svc)
+  | _ -> 
+    let%lwt _ = Logs_lwt.debug (fun m -> m "Ignoring message... ") 
+    in run_echo_service source svc
 
 let setup_log style_renderer level =
   Fmt_tty.setup_std_outputs ?style_renderer ();
@@ -67,6 +68,6 @@ let setup_log =
 
 let () =
   let _ = Term.(eval (setup_log, Term.info "tool")) in  
-  let svc = EchoService.create config  in   
-  Lwt_main.run (EchoService.start svc (run_echo_service reader writer svc)) 
+  let svc = EchoService.create config reader writer sink in   
+  Lwt_main.run @@ Lwt.join [EchoService.start svc ; run_echo_service source svc]
   

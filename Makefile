@@ -3,6 +3,7 @@
 BUILD_LIB=dune build
 BUILD_EXAMPLE=\
 	dune build example/echo/echo.exe \
+	example/echoes/echo.exe \
 	example/actor/aecho.exe \
 	example/tactor/taecho.exe \
 	example/sactor/sactor.exe \
