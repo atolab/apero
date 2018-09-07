@@ -14,27 +14,30 @@ module TcpService = struct
       ; backlog : int
       ; max_connections : int
       ; socket_options : (Lwt_unix.file_descr -> unit) list
-      ; svc_id : int }
+      ; svc_id : int 
+      ; buf_size : int}
 
     let reuseaddr reuse = fun sock -> setsockopt sock SO_REUSEADDR reuse
     let tcp_nodelay nodelay = fun sock -> setsockopt sock TCP_NODELAY nodelay
     let sndbuf size = fun sock -> setsockopt_int sock SO_SNDBUF size
     let rcvbuf size = fun sock -> setsockopt_int sock SO_SNDBUF size
     
-    let create ?(backlog=10) ?(max_connections=8192) 
+    let create ?(backlog=10) ?(max_connections=8192) ?(buf_size=65536)
                 ?(socket_options=[reuseaddr true; tcp_nodelay true]) 
                 ?(svc_id=0) locator = 
       { locator
       ; backlog
       ; max_connections
       ; socket_options
-      ; svc_id }
+      ; svc_id 
+      ; buf_size}
 
     let backlog c = c.backlog
     let locator c = c.locator 
     let socket_options c = c.socket_options
     let max_connectiosn c = c.max_connections
     let svc_id c = c.svc_id
+    let buf_size c = c.buf_size
   end
 
   module type S = sig     
@@ -48,6 +51,8 @@ module TcpService = struct
     val stop : t -> unit Lwt.t
     
     val socket : t -> Lwt_unix.file_descr    
+
+    val config : t -> Config.t
   end 
   
   module Make (MVar : MVar)  = struct 
@@ -63,7 +68,7 @@ module TcpService = struct
       ; max_connections : Int64.t 
       ; connections_count : Int64.t MVar.t
       ; connections : (Lwt_unix.file_descr ConnectionMap.t) MVar.t
-      ; svc_id : int}
+      ; config : Config.t}
 
 
     let create_server_socket config = 
@@ -124,12 +129,12 @@ module TcpService = struct
         ; max_connections = Int64.of_int (Config.max_connectiosn config)
         ; connections_count = MVar.create Int64.zero
         ; connections = MVar.create (ConnectionMap.empty) 
-        ; svc_id = Config.svc_id config } 
+        ; config } 
       
 
 
     let start (svc : t) io_svc =       
-      let%lwt _ = Logs_lwt.debug (fun m -> m "Starting TcpService with svc-id %d " svc.svc_id) in 
+      let%lwt _ = Logs_lwt.debug (fun m -> m "Starting TcpService with svc-id %d " (Config.svc_id svc.config)) in 
 
       let stop = svc.waiter >|= fun () -> `Stop in 
       
@@ -172,6 +177,8 @@ module TcpService = struct
       Lwt.return_unit
 
     let socket svc = svc.socket
+
+    let config svc = svc.config
   end
 
 end

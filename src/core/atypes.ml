@@ -1,5 +1,5 @@
 type error_kind = [`NoMsg | `Msg of string | `Code of int | `Pos of (string * int * int * int) | `Loc of string] [@@deriving show]
-
+  
 type error = [
   | `OutOfBounds of error_kind
   | `OutOfRange of error_kind
