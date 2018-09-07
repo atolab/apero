@@ -38,10 +38,74 @@ let apply_n (t : 'a) (f : 'a -> 'b)  (n: int) =
 
 module String = struct
   include String
-  let starts_with prefix s =
-    let prefix_len = length prefix in
-    length s >= prefix_len &&
-    equal (sub s 0 prefix_len) prefix
+
+  let rec equals_at_index_rec s lim i s' lim' j =
+    if j >= lim' then true
+    else if i >= lim then false
+    else if get s i != get s' j then false
+    else equals_at_index_rec s lim (i+1) s' lim' (j+1)
+
+  let equals_at_index s i s' =
+    let l = length s and l' = length s' in
+    if l' = 0 then true
+    else if l-l'-i < 0 then false
+    else equals_at_index_rec s l i s' l' 0
+
+  let rec string_index_rec s lim i s' =
+    if i >= lim then raise Not_found
+    else
+      let j = index_from s i (get s' 0) in
+      if equals_at_index s j s' then j
+      else string_index_rec s lim (j+1) s'
+
+  let string_index s s' =
+    if length s' = 0 then 0
+    else string_index_rec s (length s) 0 s'
+
+  let rec string_index_opt_rec s lim i s' =
+    if i >= lim then None
+    else
+      match index_from_opt s i (get s 0) with
+      | None -> None
+      | Some j ->
+        if equals_at_index s j s' then Some j
+        else string_index_opt_rec s lim (j+1) s'
+
+  let string_index_opt s s' =
+    if length s' = 0 then Some 0
+    else string_index_opt_rec s (length s) 0 s'
+
+  let rec string_rindex_rec s i s' =
+    if i < 0 then raise Not_found
+    else
+      let j = rindex_from s i (get s 0) in
+      if equals_at_index s j s' then j
+      else string_rindex_rec s (j-1) s'
+
+  let string_rindex s s' =
+    if length s' = 0 then 0
+    else string_rindex_rec s (length s - 1) s'
+
+  let rec string_rindex_opt_rec s i s' =
+    if i < 0 then None
+    else
+      match rindex_from_opt s i (get s 0) with
+      | None -> None
+      | Some j ->
+        if equals_at_index s j s' then Some j
+        else string_rindex_opt_rec s (j-1) s'
+
+  let string_rindex_opt s s' = 
+    if length s' = 0 then Some 0
+    else string_rindex_opt_rec s (length s - 1) s'
+
+  let contains_string s s' = string_index_opt s s' != None
+
+  let starts_with s prefix = equals_at_index s 0 prefix
+
+  let ends_with s suffix = equals_at_index s (length s - length suffix) suffix
+
+  let replace s c c' = map (function | x when x=c -> c' | x -> x) s
 end
 
 
@@ -210,7 +274,7 @@ module LwtM = struct
     | Error e -> Lwt.fail (to_exn e)
 
   let sequence a b = a >>= fun _ -> b  
-  
+
   let flatten xs = 
     let rec do_flatten acc ys = 
       match ys with
@@ -222,7 +286,7 @@ module LwtM = struct
     match Lwt_mvar.take_available mvar with 
     | Some v -> sequence (Lwt_mvar.put mvar v) (Lwt.return v)
     | None -> Lwt_mvar.take mvar >>= (fun v -> sequence (Lwt_mvar.put mvar v) (Lwt.return v))
-  
+
   module InfixM = struct 
     let (<$>) = lift
     let (>>=) = bind

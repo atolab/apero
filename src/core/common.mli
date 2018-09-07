@@ -16,7 +16,33 @@ end
 
 module String : sig
   include (module type of String)
+  val contains_string : string -> string -> bool
+  (** [String.contains_string s s'] tests if the substring [s'] appears in the string [s] *)
+
+  val string_index : string -> string -> int
+  (** [String.string_index s s'] returns the index of the first occurrence of substring [s'] in string [s].
+      Raise [Not_found] if [s'] does not occus in [s] *)
+
+  val string_index_opt : string -> string -> int option
+  (** [string_index_opt s s'] returns the index of the first occurrence of substring [s'] in string [s],
+      or [None] if [s'] does not occur in s. *)
+
+  val string_rindex : string -> string -> int
+  (** [String.string_index s s'] returns the index of the last occurrence of substring [s'] in string [s].
+      Raise [Not_found] if [s'] does not occus in [s] *)
+
+  val string_rindex_opt : string -> string -> int option
+  (** [string_index_opt s s'] returns the index of the last occurrence of substring [s'] in string [s],
+      or [None] if [s'] does not occur in s. *)
+
   val starts_with : string -> string -> bool
+  (** [String.starts_with s s'] tests if the string [s] starts with the prefix [s']  *)
+
+  val ends_with : string -> string -> bool
+  (** [String.ends_with s s'] tests if the string [s] ends with the suffix [s']  *)
+
+  val replace : string -> char -> char -> string
+  (** [replace s c' c'] replaces all occurrences of [c] in [s] with [c'] and returns the result as a new string  *)
 end
 
 module type Monad = sig 
@@ -97,8 +123,8 @@ module LwtM : sig
   val sequence : 'a Lwt.t -> 'b Lwt.t -> 'b Lwt.t  
   val read_mvar : 'a Lwt_mvar.t -> 'a Lwt.t
   (* Get the value stored in the mvar and put its back providing 
-    read  access to the underlying functional values. 
-    NOTE: This should only be used with functional types, that
+     read  access to the underlying functional values. 
+     NOTE: This should only be used with functional types, that
           have no side-effects *)
   module InfixM : sig 
     val (<$>) : ('a -> 'b) -> ('a Lwt.t -> 'b Lwt.t)
