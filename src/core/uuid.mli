@@ -1,9 +1,10 @@
 module Uuid : sig  
-  type t 
+  type t
 
   val make : unit -> t
 
-  val make_from_string : string -> t
+  val make_from_alias : string -> t
+  val alias : t -> string option
 
   val compare : t -> t -> int 
   val equal : t -> t -> bool
