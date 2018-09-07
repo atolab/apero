@@ -134,7 +134,10 @@ module TcpService = struct
 
 
     let start (svc : t) io_svc =       
-      let%lwt _ = Logs_lwt.debug (fun m -> m "Starting TcpService with svc-id %d " (Config.svc_id svc.config)) in 
+      let%lwt _ = 
+        Logs_lwt.debug (fun m -> m "Starting TcpService at %s with svc-id %d " 
+          (TcpLocator.to_string @@ Config.locator svc.config) 
+          (Config.svc_id svc.config)) in 
 
       let stop = svc.waiter >|= fun () -> `Stop in 
       
