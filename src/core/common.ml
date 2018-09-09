@@ -162,10 +162,13 @@ module Option = struct
     | Some x -> Some (f x)
     | None -> None
 
+  let lift2 f  = fun oa ob -> bind oa @@ fun a -> bind ob @@ fun b -> Some (f a b)
+
   module Infix = struct 
     let (>>=) = bind
     let (>>) a b = a >>= fun _ -> b 
     let (<$>) = lift
+    let (<$$>) = lift2
     let (>==) a b = lift b a
   end
 
