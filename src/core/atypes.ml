@@ -10,6 +10,7 @@ type error = [
   | `InvalidSession of error_kind
   | `ResourceLimitViolation of error_kind
   | `InvalidAddress
+  | `InvalidFlags
   | `NotImplemented
   | `UnknownSubMode
   | `UnknownMessageId

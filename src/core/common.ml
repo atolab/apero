@@ -122,6 +122,10 @@ module Option = struct
     | Some v -> f v
     | None -> None
 
+  let map o f = match o with 
+  | Some v -> Some (f v)
+  | None -> None
+
   let return v = Some v
 
   let zero () = None
@@ -166,6 +170,7 @@ module Option = struct
 
   module Infix = struct 
     let (>>=) = bind
+    let (>|=) = map
     let (>>) a b = a >>= fun _ -> b 
     let (<$>) = lift
     let (<$$>) = lift2

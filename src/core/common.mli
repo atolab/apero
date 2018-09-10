@@ -61,6 +61,7 @@ end
 
 module Option : sig
   val bind : 'a option -> ('a -> 'b option) -> 'b option 
+  val map : 'a option -> ('a -> 'b) -> 'b option 
   val return : 'a -> 'a option
   val zero : unit -> 'a option
   val is_some : 'a option -> bool
@@ -71,9 +72,10 @@ module Option : sig
   val flatten : ('a option) list -> ('a list) option
   val iter : 'a option -> ('a -> unit) -> unit
   val lift : ('a -> 'b) -> ('a option -> 'b option)
-  val lift2 : ('a -> 'b -> 'c) -> ('a option -> 'b option -> 'c option)
+  val lift2 : ('a -> 'b -> 'c) -> ('a option -> 'b option -> 'c option)  
   module Infix : sig 
     val (>>=) : 'a option -> ('a -> 'b option) -> 'b option 
+    val (>|=) : 'a option -> ('a -> 'b) -> 'b option 
     val (>>) : 'a option -> 'b option -> 'b option 
     val (<$>) : ('a -> 'b) -> ('a option -> 'b option)
     val (<$$>) : ('a -> 'b -> 'c) -> ('a option -> 'b option -> 'c option)
